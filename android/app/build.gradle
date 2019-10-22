@@ -1,0 +1,116 @@
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withReader('UTF-8') { reader ->
+        localProperties.load(reader)
+    }
+}
+
+def flutterRoot = localProperties.getProperty('flutter.sdk')
+if (flutterRoot == null) {
+    throw new GradleException("Flutter SDK not found. Define location with flutter.sdk in the local.properties file.")
+}
+
+def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
+if (flutterVersionCode == null) {
+    flutterVersionCode = '1'
+}
+
+def flutterVersionName = localProperties.getProperty('flutter.versionName')
+if (flutterVersionName == null) {
+    flutterVersionName = '1.0'
+}
+
+apply plugin: 'com.android.application'
+apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
+
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('key.properties')
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
+buildscript {
+    repositories {
+        // ...
+        maven { url 'https://plugins.gradle.org/m2/' } // Gradle Plugin Portal
+    }
+    dependencies {
+        // ...
+        // OneSignal-Gradle-Plugin
+        classpath 'gradle.plugin.com.onesignal:onesignal-gradle-plugin:[0.12.1, 0.99.99]'
+    }
+}
+
+android {
+    compileSdkVersion 28
+
+    lintOptions {
+        disable 'InvalidPackage'
+    }
+
+    splits {
+        // Configures multiple APKs based on ABI.
+        abi {
+            // Enables building multiple APKs per ABI.
+            enable true
+            // By default all ABIs are included, so use reset() and include to specify that we only
+            // want APKs for armeabi-v7a and arm64-v8a.
+
+            // Resets the list of ABIs that Gradle should create APKs for to none.
+            reset()
+
+            // Specifies a list of ABIs that Gradle should create APKs for.
+            // include "armeabi-v7a", "arm64-v8a"
+
+            // Specifies that we do not want to also generate a universal APK that includes all ABIs.
+            universalApk false
+        }
+    }
+
+    defaultConfig {
+        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
+        applicationId "com.saikrishna.mocktrade"
+        minSdkVersion 16
+        targetSdkVersion 28
+        versionCode 41
+        versionName "2.6"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        
+        multiDexEnabled true
+    }
+
+    signingConfigs {
+        release {
+            keyAlias keystoreProperties['keyAlias']
+            keyPassword keystoreProperties['keyPassword']
+            storeFile file(keystoreProperties['storeFile'])
+            storePassword keystoreProperties['storePassword']
+        }
+    }
+    buildTypes {
+        debug {
+            // TODO: Add your own signing config for the release build.
+            // Signing with the debug keys for now, so `flutter run --release` works.
+            signingConfig signingConfigs.debug
+        }
+        release {
+            // TODO: Add your own signing config for the release build.
+            // Signing with the debug keys for now, so `flutter run --release` works.
+            signingConfig signingConfigs.release
+        }
+    }
+}
+
+flutter {
+    source '../..'
+}
+
+dependencies {
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'androidx.test:runner:1.1.0'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.0'
+}
+
+apply plugin: 'com.onesignal.androidsdk.onesignal-gradle-plugin'
+apply plugin: 'com.google.gms.google-services'  // Google Play services Gradle plugin
