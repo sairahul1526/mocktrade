@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import 'package:http/http.dart' as http;
 import 'package:mocktrade/buysell.dart';
 import 'package:mocktrade/search.dart';
 
@@ -10,7 +9,6 @@ import 'dart:convert';
 import 'package:web_socket_channel/io.dart';
 
 import './config.dart';
-import './models.dart';
 import './utils.dart';
 
 class WatchlistsActivity extends StatefulWidget {
@@ -20,7 +18,10 @@ class WatchlistsActivity extends StatefulWidget {
   }
 }
 
-class WatchlistsActivityState extends State<WatchlistsActivity> {
+class WatchlistsActivityState extends State<WatchlistsActivity>
+    with AutomaticKeepAliveClientMixin<WatchlistsActivity> {
+  @override
+  bool get wantKeepAlive => true;
   double width = 0;
 
   IOWebSocketChannel channel = IOWebSocketChannel.connect(
@@ -31,65 +32,34 @@ class WatchlistsActivityState extends State<WatchlistsActivity> {
   void initState() {
     super.initState();
 
-    getTickers().then((response) {
-      LineSplitter ls = new LineSplitter();
-      List<String> tickerDetails = new List();
-      tickerList.clear();
-      int i = 0;
-      for (var line in ls.convert(response)) {
-        i++;
-        if (i == 1) {
-          continue;
-        }
-        tickerDetails = line.split(",");
-        tickerList.add(new Ticker(
-            instrumentToken: tickerDetails[0],
-            exchangeToken: tickerDetails[1],
-            tradingSymbol: tickerDetails[2],
-            name: tickerDetails[3],
-            expiry: tickerDetails[5],
-            strike: tickerDetails[6],
-            tickSize: tickerDetails[7],
-            lotSize: tickerDetails[8],
-            instrumentType: tickerDetails[9],
-            segment: tickerDetails[10],
-            exchange: tickerDetails[11]));
-      }
-      print(tickerList.length);
-
-      Firestore.instance
-          .collection("marketwatch")
-          .document(userID)
-          .get()
-          .then((DocumentSnapshot ds) {
-        if (ds.data["tickers"] != null) {
-          marketwatch.clear();
-          (ds.data["tickers"] as List<dynamic>).forEach((id) {
-            tickerList.forEach((ticker) {
-              if (ticker.instrumentToken == id.toString()) {
-                marketwatch.add(ticker);
-                return;
-              }
-            });
-          });
-        }
-        print(ds.data["tickers"]);
-        setState(() {
-          marketwatch = marketwatch;
+    Firestore.instance
+        .collection("marketwatch")
+        .document(phone)
+        .get()
+        .then((DocumentSnapshot ds) {
+      if (ds.data["tickers"] != null) {
+        marketwatch.clear();
+        (ds.data["tickers"] as List<dynamic>).forEach((id) {
+          marketwatch.add(tickerMap[id]);
         });
-        getData();
+      }
+      setState(() {
+        marketwatch = marketwatch;
+      });
+      getData();
+    });
+
+    Firestore.instance
+        .collection("marketwatch")
+        .document(phone)
+        .collection("positions")
+        .snapshots()
+        .listen((data) {
+      positionsMap.clear();
+      data.documents.forEach((doc) {
+        positionsMap[doc.documentID] = doc;
       });
     });
-  }
-
-  Future<String> getTickers() async {
-    final response =
-        await http.get("https://api.kite.trade/instruments", headers: {
-      "X-Kite-Version": "3",
-      "Authorization": "token " + apiKey + ":" + accessToken + ""
-    });
-
-    return response.body;
   }
 
   void splitdata(List<int> data) {
@@ -123,12 +93,12 @@ class WatchlistsActivityState extends State<WatchlistsActivity> {
       MaterialPageRoute(builder: (context) => page),
     ) as String;
 
-    print("getdata");
     getData();
   }
 
   @override
   Widget build(BuildContext context) {
+    super.build(context);
     width = MediaQuery.of(context).size.width;
     return new Scaffold(
       body: new Container(
@@ -158,7 +128,7 @@ class WatchlistsActivityState extends State<WatchlistsActivity> {
                   color: Colors.white,
                   elevation: 10,
                   child: new Container(
-                    height: 50,
+                    padding: EdgeInsets.fromLTRB(0, 13, 0, 13),
                     child: new Row(
                       children: <Widget>[
                         new Icon(
@@ -208,15 +178,17 @@ class WatchlistsActivityState extends State<WatchlistsActivity> {
                         itemBuilder: (itemContext, i) {
                           return new GestureDetector(
                             onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => new BuySellActivity(
-                                        int.parse(
-                                            marketwatch[i].instrumentToken),
-                                        marketwatch[i].tradingSymbol,
-                                        false)),
-                              );
+                              if (marketwatch[i].segment != "INDICES") {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => new BuySellActivity(
+                                          int.parse(
+                                              marketwatch[i].instrumentToken),
+                                          marketwatch[i].tradingSymbol,
+                                          false)),
+                                );
+                              }
                             },
                             child: new Container(
                               color: Colors.transparent,
@@ -239,7 +211,7 @@ class WatchlistsActivityState extends State<WatchlistsActivity> {
                                               null
                                           ? tickers[int.parse(marketwatch[i]
                                                   .instrumentToken)]
-                                              .toString()
+                                              .toStringAsFixed(2)
                                           : ""),
                                     ],
                                   ),
@@ -247,16 +219,43 @@ class WatchlistsActivityState extends State<WatchlistsActivity> {
                                     height: 5,
                                   ),
                                   new Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
+                                    mainAxisAlignment: MainAxisAlignment.start,
                                     children: <Widget>[
                                       new Text(
-                                        marketwatch[i].exchange,
+                                        marketwatch[i].segment,
                                         style: TextStyle(
                                           color: Colors.grey,
                                           fontSize: 12,
                                         ),
                                       ),
+                                      new Container(
+                                        width: 10,
+                                      ),
+                                      positionsMap[marketwatch[i]
+                                                  .instrumentToken] !=
+                                              null
+                                          ? new Icon(
+                                              Icons.card_travel,
+                                              color: Colors.grey,
+                                              size: 15,
+                                            )
+                                          : new Container(),
+                                      new Container(
+                                        width: 10,
+                                      ),
+                                      positionsMap[marketwatch[i]
+                                                  .instrumentToken] !=
+                                              null
+                                          ? new Text(
+                                              positionsMap[marketwatch[i]
+                                                      .instrumentToken]
+                                                  .data["shares"]
+                                                  .toString(),
+                                              style: TextStyle(
+                                                color: Colors.grey,
+                                                fontSize: 12,
+                                              ))
+                                          : new Container()
                                     ],
                                   )
                                 ],
