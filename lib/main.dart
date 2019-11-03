@@ -1,5 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:mocktrade/watchlist.dart';
+import 'package:mocktrade/dashboard.dart';
+import 'package:mocktrade/login.dart';
+
+import './utils.dart';
+import './models.dart';
+import 'dart:convert';
+import './config.dart';
+import 'package:flutter/foundation.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -27,166 +34,86 @@ class MyHomePage extends StatefulWidget {
   _MyHomePageState createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage>
-    with SingleTickerProviderStateMixin {
-  int selectedTab = 0;
-  TabController controller;
-
+class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    controller = new TabController(length: 4, vsync: this, initialIndex: 0);
-  }
 
-  @override
-  void dispose() {
-    super.dispose();
-    controller.dispose();
+    getTickers().then((response) {
+      LineSplitter ls = new LineSplitter();
+      List<String> tickerDetails = new List();
+      tickerList.clear();
+      int i = 0;
+      for (var line in ls.convert(response)) {
+        i++;
+        if (i == 1) {
+          continue;
+        }
+        tickerDetails = line.split(",");
+        tickerMap[int.parse(tickerDetails[0])] = new Ticker(
+            instrumentToken: tickerDetails[0],
+            exchangeToken: tickerDetails[1],
+            tradingSymbol: tickerDetails[2],
+            name: tickerDetails[3],
+            expiry: tickerDetails[5],
+            strike: tickerDetails[6],
+            tickSize: tickerDetails[7],
+            lotSize: tickerDetails[8],
+            instrumentType: tickerDetails[9],
+            segment: tickerDetails[10],
+            exchange: tickerDetails[11]);
+        tickerList.add(new Ticker(
+            instrumentToken: tickerDetails[0],
+            exchangeToken: tickerDetails[1],
+            tradingSymbol: tickerDetails[2],
+            name: tickerDetails[3],
+            expiry: tickerDetails[5],
+            strike: tickerDetails[6],
+            tickSize: tickerDetails[7],
+            lotSize: tickerDetails[8],
+            instrumentType: tickerDetails[9],
+            segment: tickerDetails[10],
+            exchange: tickerDetails[11]));
+      }
+
+      Future<bool> prefInit = initSharedPreference();
+      prefInit.then((onValue) {
+        if (onValue) {
+          if (prefs.getString("phone") != null &&
+              prefs.getString("phone").length > 0) {
+            phone = prefs.getString("phone");
+
+            Navigator.of(context).pushReplacement(new MaterialPageRoute(
+                builder: (BuildContext context) => new DashboardActivity()));
+          } else {
+            Navigator.of(context).pushReplacement(new MaterialPageRoute(
+                builder: (BuildContext context) => new LoginActivity()));
+          }
+        } else {
+          Navigator.of(context).pushReplacement(new MaterialPageRoute(
+              builder: (BuildContext context) => new LoginActivity()));
+        }
+      });
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    return new Scaffold(
-      bottomNavigationBar: new BottomAppBar(
-        elevation: 50,
-        child: new Row(
-          children: <Widget>[
-            new Expanded(
-              child: SizedBox(
-                height: 60,
-                child: Material(
-                  type: MaterialType.transparency,
-                  child: InkWell(
-                    onTap: () {
-                      setState(() {
-                        selectedTab = 0;
-                        controller.index = selectedTab;
-                      });
-                    },
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        Icon(Icons.bookmark_border,
-                            color:
-                                selectedTab == 0 ? Colors.blue : Colors.black),
-                        Text(
-                          "Watchlist",
-                          style: TextStyle(
-                              color: selectedTab == 0
-                                  ? Colors.blue
-                                  : Colors.black),
-                        )
-                      ],
-                    ),
-                  ),
-                ),
+    return MaterialApp(
+      home: new Container(
+        color: Colors.white,
+        child: new Center(
+          child: new ListView(
+            shrinkWrap: true,
+            children: <Widget>[
+              new SizedBox(
+                width: 200,
+                height: 200,
+                child: new Image.asset('assets/bull.jpg'),
               ),
-            ),
-            new Expanded(
-              child: SizedBox(
-                child: Material(
-                  type: MaterialType.transparency,
-                  child: InkWell(
-                    onTap: () {
-                      setState(() {
-                        selectedTab = 1;
-                        controller.index = selectedTab;
-                      });
-                    },
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        Icon(Icons.card_travel,
-                            color:
-                                selectedTab == 1 ? Colors.blue : Colors.black),
-                        Text(
-                          "Positions",
-                          style: TextStyle(
-                              color: selectedTab == 1
-                                  ? Colors.blue
-                                  : Colors.black),
-                        )
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            new Expanded(
-              child: SizedBox(
-                child: Material(
-                  type: MaterialType.transparency,
-                  child: InkWell(
-                    onTap: () {
-                      setState(() {
-                        selectedTab = 2;
-                        controller.index = selectedTab;
-                      });
-                    },
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        Icon(Icons.contacts,
-                            color:
-                                selectedTab == 2 ? Colors.blue : Colors.black),
-                        Text(
-                          "Traders",
-                          style: TextStyle(
-                              color: selectedTab == 2
-                                  ? Colors.blue
-                                  : Colors.black),
-                        )
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            new Expanded(
-              child: SizedBox(
-                child: Material(
-                  type: MaterialType.transparency,
-                  child: InkWell(
-                    onTap: () {
-                      setState(() {
-                        selectedTab = 3;
-                        controller.index = selectedTab;
-                      });
-                    },
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        Icon(Icons.person_outline,
-                            color:
-                                selectedTab == 3 ? Colors.blue : Colors.black),
-                        Text(
-                          "Account",
-                          style: TextStyle(
-                              color: selectedTab == 3
-                                  ? Colors.blue
-                                  : Colors.black),
-                        )
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
-      ),
-      body: new TabBarView(
-        controller: controller,
-        children: <Widget>[
-          new WatchlistsActivity(),
-          new Container(),
-          new Container(),
-          new Container()
-        ],
       ),
     );
   }
