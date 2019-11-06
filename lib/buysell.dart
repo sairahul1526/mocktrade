@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:mocktrade/alert.dart';
 import 'package:modal_progress_hud/modal_progress_hud.dart';
+import 'package:slider_button/slider_button.dart';
 
 import './models.dart';
 
@@ -30,6 +32,7 @@ class BuySellActivityState extends State<BuySellActivity> {
   TextEditingController shares = new TextEditingController();
 
   String amount = "";
+  double availableamount = 0;
 
   List<Ticker> tickerBuySellList = new List();
 
@@ -50,15 +53,31 @@ class BuySellActivityState extends State<BuySellActivity> {
   double lowPrice;
   double closePrice;
 
-  final globalKey = GlobalKey<ScaffoldState>(); 
+  final globalKey = GlobalKey<ScaffoldState>();
 
   IOWebSocketChannel channel = IOWebSocketChannel.connect(
       "wss://ws.kite.trade?api_key=" + apiKey + "&access_token=" + accessToken);
+
+  Widget buyselbutton;
 
   BuySellActivityState(this.id, this.symbol, this.sell);
   @override
   void initState() {
     super.initState();
+
+    shares.text = tickerMap[id].lotSize;
+    Firestore.instance
+        .collection("marketwatch")
+        .document(phone)
+        .collection("amount")
+        .snapshots()
+        .listen((data) {
+      data.documents.forEach((doc) {
+        setState(() {
+          availableamount = doc.data["total"] + .0;
+        });
+      });
+    });
 
     Map<String, dynamic> message = {
       "a": "mode",
@@ -75,7 +94,6 @@ class BuySellActivityState extends State<BuySellActivity> {
       return;
     }
 
-    // setState(() {
     lastTradedPrice = converttoint(data.getRange(8, 12)).toDouble() / 100;
     lastTradedQuantity = converttoint(data.getRange(12, 16)).toDouble();
     averageTradedPrice = converttoint(data.getRange(16, 20)).toDouble() / 100;
@@ -86,35 +104,75 @@ class BuySellActivityState extends State<BuySellActivity> {
     highPrice = converttoint(data.getRange(36, 40)).toDouble() / 100;
     lowPrice = converttoint(data.getRange(40, 44)).toDouble() / 100;
     closePrice = converttoint(data.getRange(44, 48)).toDouble() / 100;
-    // });
   }
 
-  @override
-  Widget build(BuildContext context) {
-    width = MediaQuery.of(context).size.width;
-    return new Scaffold(
-      key: globalKey,
-      appBar: new AppBar(
-        iconTheme: IconThemeData(
-          color: Colors.black,
-        ),
-        backgroundColor: Colors.white,
-      ),
-      floatingActionButton: new Align(
+  void closeActivity(String title, String subtitle, bool success) {
+    Navigator.of(context).pop();
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+          builder: (context) => new AlertActivity(title, subtitle, success)),
+    );
+  }
+
+  Widget getbuyselbutton() {
+    return new Align(
         alignment: Alignment.bottomCenter,
-        child: new FloatingActionButton(
-          onPressed: () {
+        child: new SliderButton(
+          width: width * 0.65,
+          height: 65,
+          action: () {
+            if (!isMarketOpen()) {
+              closeActivity("Rejected",
+                  "Order was placed outside of trading hours.", false);
+              return;
+            }
             if (shares.text.length > 0 &&
                 shares.text != "0" &&
+                lastTradedPrice != null &&
                 lastTradedPrice != 0) {
               if (int.parse(shares.text) % int.parse(tickerMap[id].lotSize) !=
                   0) {
-                globalKey.currentState.showSnackBar(new SnackBar(
-                  backgroundColor: Colors.red,
-                  content: new Text("Quantity has to be multiple of lot size " +
-                      tickerMap[id].lotSize),
-                ));
+                closeActivity("Rejected",
+                    "Quantity has to be multiple of lot size.", false);
                 return;
+              }
+              if (sell) {
+                if (positionsMap[id.toString()] == null) {
+                  closeActivity(
+                      "Rejected", "Shares not available to sell.", false);
+                  return;
+                }
+                if (positionsMap[id.toString()].data["shares"] <
+                    int.parse(shares.text)) {
+                  setState(() {
+                    buyselbutton = getbuyselbutton();
+                  });
+                  closeActivity(
+                      "Rejected",
+                      "Only " +
+                          positionsMap[id.toString()]
+                              .data["shares"]
+                              .toString() +
+                          " shares are available to sell",
+                      false);
+                  return;
+                }
+              } else {
+                if (int.parse(shares.text) * lastTradedPrice >
+                    availableamount) {
+                  setState(() {
+                    buyselbutton = getbuyselbutton();
+                  });
+                  closeActivity(
+                      "Rejected",
+                      "Only " +
+                          "Amount Required " +
+                          (int.parse(shares.text) * lastTradedPrice)
+                              .toStringAsFixed(2),
+                      false);
+                  return;
+                }
               }
               setState(() {
                 loading = true;
@@ -130,14 +188,102 @@ class BuySellActivityState extends State<BuySellActivity> {
                 "type": sell ? 0 : 1,
                 "time": DateTime.now().millisecondsSinceEpoch,
               }).then((onValue) {
-                Navigator.of(context).pop();
+                Firestore.instance
+                    .collection("marketwatch")
+                    .document(phone)
+                    .collection("amount")
+                    .document("amount")
+                    .setData({
+                  "total": FieldValue.increment(sell
+                      ? double.parse((int.parse(shares.text) * lastTradedPrice)
+                          .toStringAsFixed(2))
+                      : -double.parse((int.parse(shares.text) * lastTradedPrice)
+                          .toStringAsFixed(2))),
+                }, merge: true).then((onValue) {
+                  if (sell &&
+                      positionsMap[id.toString()].data["shares"] ==
+                          int.parse(shares.text)) {
+                    Firestore.instance
+                        .collection("marketwatch")
+                        .document(phone)
+                        .collection("positions")
+                        .document(id.toString())
+                        .delete()
+                        .then((onValue) {
+                      closeActivity(
+                          "Completed", "Order successfully placed", true);
+                    });
+                  } else {
+                    Firestore.instance
+                        .collection("marketwatch")
+                        .document(phone)
+                        .collection("positions")
+                        .document(id.toString())
+                        .setData({
+                      "shares": FieldValue.increment(sell
+                          ? -int.parse(shares.text)
+                          : int.parse(shares.text)),
+                      "invested": FieldValue.increment(sell
+                          ? -double.parse(
+                              (int.parse(shares.text) * lastTradedPrice)
+                                  .toStringAsFixed(2))
+                          : double.parse(
+                              (int.parse(shares.text) * lastTradedPrice)
+                                  .toStringAsFixed(2))),
+                    }, merge: true).then((onValue) {
+                      closeActivity(
+                          "Completed", "Order successfully placed", true);
+                    });
+                  }
+                });
               });
             }
           },
-          child: Icon(Icons.done),
+          label: new Text(
+            sell ? "SELL            " : "BUY            ",
+            style: new TextStyle(
+              color: sell ? Colors.red : Colors.green,
+              fontSize: 12,
+            ),
+          ),
+          buttonColor: Colors.white,
+          highlightedColor: Colors.white,
+          baseColor: Colors.white,
           backgroundColor: sell ? Colors.red : Colors.green,
+          icon: new Center(
+            child: new Icon(Icons.arrow_forward_ios),
+          ),
+          shimmer: true,
+        ));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    width = MediaQuery.of(context).size.width;
+    setState(() {
+      buyselbutton = getbuyselbutton();
+    });
+    return new Scaffold(
+      key: globalKey,
+      appBar: new AppBar(
+        iconTheme: IconThemeData(
+          color: Colors.black,
         ),
+        backgroundColor: Colors.white,
+        actions: <Widget>[
+          (positionsMap[id.toString()] != null)
+              ? new IconButton(
+                  onPressed: () {
+                    setState(() {
+                      sell = !sell;
+                    });
+                  },
+                  icon: new Icon(Icons.swap_vert),
+                )
+              : new Container(),
+        ],
       ),
+      floatingActionButton: buyselbutton,
       body: new ModalProgressHUD(
         inAsyncCall: loading,
         child: new Container(
@@ -163,7 +309,7 @@ class BuySellActivityState extends State<BuySellActivity> {
                   ),
                   closePrice != null
                       ? new Text(
-                          lastTradedPrice.toString() +
+                          lastTradedPrice.toStringAsFixed(2) +
                               "   " +
                               (lastTradedPrice - closePrice)
                                   .toStringAsFixed(2) +
@@ -182,7 +328,15 @@ class BuySellActivityState extends State<BuySellActivity> {
                     height: 8,
                   ),
                   new Text(
-                    "120 available",
+                    (sell
+                            ? (positionsMap[id.toString()] != null
+                                ? positionsMap[id.toString()]
+                                    .data["shares"]
+                                    .toString()
+                                : "")
+                            : availableamount.toStringAsFixed(2)) +
+                        (sell ? " shares" : " amount") +
+                        " available",
                     style: TextStyle(
                       color: Colors.grey,
                       fontSize: 12,
@@ -203,7 +357,6 @@ class BuySellActivityState extends State<BuySellActivity> {
                       new Container(
                         width: width * 0.25,
                         child: new TextField(
-                          autofocus: true,
                           onChanged: (text) {
                             if (text.length > 0) {
                               setState(() {
@@ -267,7 +420,7 @@ class BuySellActivityState extends State<BuySellActivity> {
                             new Column(
                               children: <Widget>[
                                 new Text(
-                                  openPrice.toString(),
+                                  openPrice.toStringAsFixed(2),
                                   style: TextStyle(
                                     fontSize: 20,
                                     fontWeight: FontWeight.bold,
@@ -288,7 +441,7 @@ class BuySellActivityState extends State<BuySellActivity> {
                             new Column(
                               children: <Widget>[
                                 new Text(
-                                  highPrice.toString(),
+                                  highPrice.toStringAsFixed(2),
                                   style: TextStyle(
                                     fontSize: 20,
                                     fontWeight: FontWeight.bold,
@@ -319,7 +472,7 @@ class BuySellActivityState extends State<BuySellActivity> {
                             new Column(
                               children: <Widget>[
                                 new Text(
-                                  lowPrice.toString(),
+                                  lowPrice.toStringAsFixed(2),
                                   style: TextStyle(
                                     fontSize: 20,
                                     fontWeight: FontWeight.bold,
@@ -340,7 +493,7 @@ class BuySellActivityState extends State<BuySellActivity> {
                             new Column(
                               children: <Widget>[
                                 new Text(
-                                  closePrice.toString(),
+                                  closePrice.toStringAsFixed(2),
                                   style: TextStyle(
                                     fontSize: 20,
                                     fontWeight: FontWeight.bold,
@@ -392,7 +545,7 @@ class BuySellActivityState extends State<BuySellActivity> {
                             new Column(
                               children: <Widget>[
                                 new Text(
-                                  averageTradedPrice.toString(),
+                                  averageTradedPrice.toStringAsFixed(2),
                                   style: TextStyle(
                                     fontSize: 20,
                                     fontWeight: FontWeight.bold,
@@ -464,7 +617,10 @@ class BuySellActivityState extends State<BuySellActivity> {
                             )
                           ],
                         )
-                      : new Container()
+                      : new Container(),
+                  new Container(
+                    height: 100,
+                  ),
                 ],
               );
             },
