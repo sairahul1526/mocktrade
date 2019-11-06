@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:mocktrade/config.dart';
 import 'package:mocktrade/dashboard.dart';
 
@@ -22,29 +23,13 @@ class LoginActivityState extends State<LoginActivity> {
   String _verificationId;
 
   bool otpsent = false;
+  bool verifyotp = false;
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   @override
   Widget build(BuildContext context) {
     return new Scaffold(
-      floatingActionButton: new Align(
-        alignment: Alignment.bottomCenter,
-        child: new FloatingActionButton(
-          onPressed: () async {
-            if (otpsent) {
-              _signInWithPhoneNumber();
-            } else {
-              setState(() {
-                otpsent = true;
-              });
-              _verifyPhoneNumber();
-            }
-          },
-          child: Icon(Icons.arrow_forward_ios),
-          backgroundColor: Colors.blue,
-        ),
-      ),
       body: new SafeArea(
         child: new Container(
           color: Colors.white,
@@ -61,7 +46,9 @@ class LoginActivityState extends State<LoginActivity> {
                 child: new Image.asset('assets/bull.jpg'),
               ),
               new Container(
-                child: new Text('Login', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 30)),
+                child: new Text('Login',
+                    style:
+                        TextStyle(fontWeight: FontWeight.bold, fontSize: 25)),
                 padding: new EdgeInsets.all(16),
                 alignment: Alignment.center,
               ),
@@ -90,7 +77,7 @@ class LoginActivityState extends State<LoginActivity> {
                                       ? "Enter Valid Phone Number"
                                       : null,
                                   isDense: true,
-                                  prefixIcon: Icon(Icons.phone),
+                                  prefixIcon: new Icon(Icons.phone),
                                   border: OutlineInputBorder(),
                                   labelText: 'Phone Number',
                                 ),
@@ -147,6 +134,8 @@ class LoginActivityState extends State<LoginActivity> {
                           onPressed: () {
                             setState(() {
                               otpsent = false;
+                              verifyotp = false;
+                              otp.text = "";
                               phoneno.text = "";
                               phonenoCheck = false;
                             });
@@ -160,7 +149,9 @@ class LoginActivityState extends State<LoginActivity> {
                           ),
                           onPressed: () async {
                             setState(() {
+                              otp.text = "";
                               otpsent = true;
+                              verifyotp = false;
                             });
                             _verifyPhoneNumber();
                           },
@@ -168,6 +159,28 @@ class LoginActivityState extends State<LoginActivity> {
                       ],
                     )
                   : new Container(),
+              new Container(
+                margin: new EdgeInsets.fromLTRB(0, 30, 0, 0),
+                child: new MaterialButton(
+                  color: Colors.blue,
+                  height: 40,
+                  child: new Text(
+                    otpsent ? "Verify OTP" : "Send OTP",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  onPressed: () {
+                    if (otpsent && !verifyotp) {
+                      verifyotp = true;
+                      _signInWithPhoneNumber();
+                    } else {
+                      setState(() {
+                        otpsent = true;
+                      });
+                      _verifyPhoneNumber();
+                    }
+                  },
+                ),
+              ),
             ],
           ),
         ),
@@ -217,8 +230,35 @@ class LoginActivityState extends State<LoginActivity> {
         prefs.setString("phone", phoneno.text);
         phone = phoneno.text;
 
-        Navigator.of(context).pushReplacement(new MaterialPageRoute(
-            builder: (BuildContext context) => new DashboardActivity()));
+        Firestore.instance.collection("phone").document(phoneno.text).setData({
+          "last_login": DateTime.now().millisecondsSinceEpoch,
+        }).then((onValue) {
+          Firestore.instance
+              .collection("marketwatch")
+              .document(phoneno.text)
+              .collection("amount")
+              .document("amount")
+              .get()
+              .then((DocumentSnapshot ds) {
+            if (!ds.exists) {
+              Firestore.instance
+                  .collection("marketwatch")
+                  .document(phoneno.text)
+                  .collection("amount")
+                  .document("amount")
+                  .setData({
+                "total": 100000,
+              }).then((onValue) {
+                Navigator.of(context).pushReplacement(new MaterialPageRoute(
+                    builder: (BuildContext context) =>
+                        new DashboardActivity()));
+              });
+            } else {
+              Navigator.of(context).pushReplacement(new MaterialPageRoute(
+                  builder: (BuildContext context) => new DashboardActivity()));
+            }
+          });
+        });
       } else {
         otpCheck = true;
       }
