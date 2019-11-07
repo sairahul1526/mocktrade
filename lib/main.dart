@@ -7,6 +7,7 @@ import './models.dart';
 import 'dart:convert';
 import './config.dart';
 import 'package:flutter/foundation.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,7 +39,24 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-
+    Firestore.instance
+        .collection("token")
+        .document("token")
+        .get()
+        .then((DocumentSnapshot ds) {
+      accessToken = ds.data["token"];
+    });
+    Firestore.instance
+        .collection("timing")
+        .document(DateTime.now().weekday.toString())
+        .get()
+        .then((DocumentSnapshot ds) {
+      holiday = ds.data["holiday"];
+      List<String> opening = ds.data["open"].split(":");
+      List<String> closing = ds.data["close"].split(":");
+      open = new DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day, int.parse(opening[0]), int.parse(opening[1]), 0, 0, 0);
+      close = new DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day, int.parse(closing[0]), int.parse(closing[1]), 0, 0, 0);
+    });
     getTickers().then((response) {
       LineSplitter ls = new LineSplitter();
       List<String> tickerDetails = new List();

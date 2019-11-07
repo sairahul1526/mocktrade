@@ -117,6 +117,8 @@ class SearchActivityState extends State<SearchActivity> {
                           Firestore.instance
                               .collection("marketwatch")
                               .document(phone)
+                              .collection("tickers")
+                              .document("tickers")
                               .setData({"tickers": tickers}).then((onValue) {
                             Navigator.of(context).pop();
                           });

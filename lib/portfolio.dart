@@ -120,7 +120,7 @@ class PortfolioActivityState extends State<PortfolioActivity>
             child: new StreamBuilder(
               stream: channel.stream,
               builder: (context, snapshot) {
-                if (snapshot.hasData) {
+                if (snapshot.hasData && positions.length > 0) {
                   splitdata(snapshot.data);
                 }
                 return new Column(
@@ -329,7 +329,7 @@ class PortfolioActivityState extends State<PortfolioActivity>
                                                                           .data[
                                                                       "shares"]) -
                                                               positions[i].data[
-                                                                  "invested"]) /
+                                                                  "invested"]) * 100 /
                                                           positions[i]
                                                               .data["invested"])
                                                       .toStringAsFixed(2) +

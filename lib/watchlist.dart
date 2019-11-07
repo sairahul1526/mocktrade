@@ -35,12 +35,16 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
     Firestore.instance
         .collection("marketwatch")
         .document(phone)
-        .get()
-        .then((DocumentSnapshot ds) {
+        .collection("tickers")
+        .document("tickers")
+        .snapshots()
+        .listen((ds) {
       if (ds.data["tickers"] != null) {
         marketwatch.clear();
         (ds.data["tickers"] as List<dynamic>).forEach((id) {
-          marketwatch.add(tickerMap[id]);
+          if (tickerMap[id] != null) {
+            marketwatch.add(tickerMap[id]);
+          }
         });
       }
       setState(() {
@@ -87,7 +91,7 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
     channel.sink.add(jsonEncode(message));
   }
 
-  hostelsPage(BuildContext context, Widget page) async {
+  searchPage(BuildContext context, Widget page) async {
     final data = await Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => page),
@@ -157,7 +161,7 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
                     ),
                   ),
                   onPressed: () {
-                    hostelsPage(context, new SearchActivity());
+                    searchPage(context, new SearchActivity());
                   },
                 ),
                 new Container(
@@ -166,102 +170,111 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
                 new StreamBuilder(
                   stream: channel.stream,
                   builder: (context, snapshot) {
-                    if (snapshot.hasData) {
+                    if (snapshot.hasData && marketwatch.length > 0) {
                       splitdata(snapshot.data);
                     }
                     return new Expanded(
                       child: new ListView.separated(
                         itemCount: marketwatch.length,
                         separatorBuilder: (context, i) {
-                          return new Divider();
+                          return marketwatch[i] == null
+                              ? new Container()
+                              : new Divider();
                         },
                         itemBuilder: (itemContext, i) {
-                          return new GestureDetector(
-                            onTap: () {
-                              if (marketwatch[i].segment != "INDICES") {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) => new BuySellActivity(
-                                          int.parse(
-                                              marketwatch[i].instrumentToken),
-                                          marketwatch[i].tradingSymbol,
-                                          false)),
-                                );
-                              }
-                            },
-                            child: new Container(
-                              color: Colors.transparent,
-                              width: width,
-                              padding: EdgeInsets.fromLTRB(0, 10, 0, 10),
-                              child: new Column(
-                                children: <Widget>[
-                                  new Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
-                                    children: <Widget>[
-                                      new Text(
-                                        marketwatch[i].tradingSymbol,
-                                        style: TextStyle(
-                                          fontSize: 15,
+                          return marketwatch[i] == null
+                              ? new Container()
+                              : new GestureDetector(
+                                  onTap: () {
+                                    if (marketwatch[i].segment != "INDICES") {
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) =>
+                                                new BuySellActivity(
+                                                    int.parse(marketwatch[i]
+                                                        .instrumentToken),
+                                                    marketwatch[i]
+                                                        .tradingSymbol,
+                                                    false)),
+                                      );
+                                    }
+                                  },
+                                  child: new Container(
+                                    color: Colors.transparent,
+                                    width: width,
+                                    padding: EdgeInsets.fromLTRB(0, 10, 0, 10),
+                                    child: new Column(
+                                      children: <Widget>[
+                                        new Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: <Widget>[
+                                            new Text(
+                                              marketwatch[i].tradingSymbol,
+                                              style: TextStyle(
+                                                fontSize: 15,
+                                              ),
+                                            ),
+                                            new Text(tickers[int.parse(
+                                                        marketwatch[i]
+                                                            .instrumentToken)] !=
+                                                    null
+                                                ? tickers[int.parse(
+                                                        marketwatch[i]
+                                                            .instrumentToken)]
+                                                    .toStringAsFixed(2)
+                                                : ""),
+                                          ],
                                         ),
-                                      ),
-                                      new Text(tickers[int.parse(marketwatch[i]
-                                                  .instrumentToken)] !=
-                                              null
-                                          ? tickers[int.parse(marketwatch[i]
-                                                  .instrumentToken)]
-                                              .toStringAsFixed(2)
-                                          : ""),
-                                    ],
-                                  ),
-                                  new Container(
-                                    height: 5,
-                                  ),
-                                  new Row(
-                                    mainAxisAlignment: MainAxisAlignment.start,
-                                    children: <Widget>[
-                                      new Text(
-                                        marketwatch[i].segment,
-                                        style: TextStyle(
-                                          color: Colors.grey,
-                                          fontSize: 12,
+                                        new Container(
+                                          height: 5,
                                         ),
-                                      ),
-                                      new Container(
-                                        width: 10,
-                                      ),
-                                      positionsMap[marketwatch[i]
-                                                  .instrumentToken] !=
-                                              null
-                                          ? new Icon(
-                                              Icons.card_travel,
-                                              color: Colors.grey,
-                                              size: 15,
-                                            )
-                                          : new Container(),
-                                      new Container(
-                                        width: 10,
-                                      ),
-                                      positionsMap[marketwatch[i]
-                                                  .instrumentToken] !=
-                                              null
-                                          ? new Text(
-                                              positionsMap[marketwatch[i]
-                                                      .instrumentToken]
-                                                  .data["shares"]
-                                                  .toString(),
+                                        new Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.start,
+                                          children: <Widget>[
+                                            new Text(
+                                              marketwatch[i].segment,
                                               style: TextStyle(
                                                 color: Colors.grey,
                                                 fontSize: 12,
-                                              ))
-                                          : new Container()
-                                    ],
-                                  )
-                                ],
-                              ),
-                            ),
-                          );
+                                              ),
+                                            ),
+                                            new Container(
+                                              width: 10,
+                                            ),
+                                            positionsMap[marketwatch[i]
+                                                        .instrumentToken] !=
+                                                    null
+                                                ? new Icon(
+                                                    Icons.card_travel,
+                                                    color: Colors.grey,
+                                                    size: 15,
+                                                  )
+                                                : new Container(),
+                                            new Container(
+                                              width: 10,
+                                            ),
+                                            positionsMap[marketwatch[i]
+                                                        .instrumentToken] !=
+                                                    null
+                                                ? new Text(
+                                                    positionsMap[marketwatch[i]
+                                                            .instrumentToken]
+                                                        .data["shares"]
+                                                        .toString(),
+                                                    style: TextStyle(
+                                                      color: Colors.grey,
+                                                      fontSize: 12,
+                                                    ))
+                                                : new Container()
+                                          ],
+                                        )
+                                      ],
+                                    ),
+                                  ),
+                                );
                         },
                       ),
                     );

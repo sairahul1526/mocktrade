@@ -33,8 +33,8 @@ class AccountActivityState extends State<AccountActivity>
   List<DocumentSnapshot> positions = new List();
   double amount = 0;
 
-  double invested = 0;
-  double current = 0;
+  double invested;
+  double current;
 
   @override
   void initState() {
@@ -48,7 +48,7 @@ class AccountActivityState extends State<AccountActivity>
         .listen((data) {
       data.documents.forEach((doc) {
         setState(() {
-          amount = doc.data["total"];
+          amount = doc.data["total"] + .0;
         });
       });
     });
@@ -62,7 +62,6 @@ class AccountActivityState extends State<AccountActivity>
       positions.clear();
       data.documents.forEach((doc) {
         positions.add(doc);
-        print(doc.data["invested"]);
       });
       getData();
     });
@@ -134,7 +133,7 @@ class AccountActivityState extends State<AccountActivity>
                 new StreamBuilder(
                     stream: channel.stream,
                     builder: (context, snapshot) {
-                      if (snapshot.hasData) {
+                      if (snapshot.hasData && positions.length > 0) {
                         splitdata(snapshot.data);
                       }
                       return new RaisedButton(
@@ -154,7 +153,11 @@ class AccountActivityState extends State<AccountActivity>
                               new Container(
                                 margin: EdgeInsets.fromLTRB(0, 10, 0, 10),
                                 child: new Text(
-                                  (current + amount).toStringAsFixed(2),
+                                  current != null && amount != null
+                                      ? (current + amount).toStringAsFixed(2)
+                                      : (amount != null
+                                          ? amount.toStringAsFixed(2)
+                                          : ""),
                                   style: TextStyle(
                                     fontSize: 25,
                                   ),
@@ -171,9 +174,13 @@ class AccountActivityState extends State<AccountActivity>
                                           CrossAxisAlignment.start,
                                       children: <Widget>[
                                         new Text(
-                                          (invested * 100 / (invested + amount))
-                                                  .toStringAsFixed(2) +
-                                              " %",
+                                          invested != null && amount != null
+                                              ? (invested *
+                                                          100 /
+                                                          (invested + amount))
+                                                      .toStringAsFixed(2) +
+                                                  " %"
+                                              : "0.00 %",
                                           style: TextStyle(
                                             color: Colors.black,
                                             fontSize: 15,
@@ -207,7 +214,9 @@ class AccountActivityState extends State<AccountActivity>
                                               ),
                                             ),
                                             new Text(
-                                              invested.toStringAsFixed(2),
+                                              invested != null
+                                                  ? invested.toStringAsFixed(2)
+                                                  : "0.00",
                                               style: TextStyle(
                                                 color: Colors.black,
                                                 fontSize: 15,
@@ -265,12 +274,13 @@ class AccountActivityState extends State<AccountActivity>
                         builder: (BuildContext context) => new MyHomePage()));
                   },
                   child: new Container(
+                    color: Colors.transparent,
                     padding: EdgeInsets.all(20),
                     child: new Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: <Widget>[
                         new Text("Logout "),
-                        new Icon(Icons.power_settings_new)
+                        new Icon(Icons.exit_to_app)
                       ],
                     ),
                   ),
