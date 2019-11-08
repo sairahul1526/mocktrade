@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:mocktrade/dashboard.dart';
-import 'package:mocktrade/login.dart';
-
-import './utils.dart';
-import './models.dart';
-import 'dart:convert';
-import './config.dart';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:convert';
+
+import './screens/dashboard.dart';
+import './screens/login.dart';
+import './utils/utils.dart';
+import './utils/models.dart';
+import './utils/config.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();

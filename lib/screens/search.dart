@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:modal_progress_hud/modal_progress_hud.dart';
 
-import './utils.dart';
-
-import './config.dart';
-import './models.dart';
+import '../utils/utils.dart';
+import '../utils/config.dart';
+import '../utils/models.dart';
 
 class SearchActivity extends StatefulWidget {
   @override

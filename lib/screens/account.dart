@@ -1,18 +1,11 @@
 import 'package:flutter/material.dart';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
-
-import 'package:mocktrade/buysell.dart';
-import 'package:mocktrade/main.dart';
-import 'package:mocktrade/orders.dart';
-import 'package:mocktrade/search.dart';
-
 import 'dart:convert';
 import 'package:web_socket_channel/io.dart';
 
-import './config.dart';
-import './models.dart';
-import './utils.dart';
+import '../main.dart';
+import '../utils/config.dart';
+import '../utils/utils.dart';
 
 class AccountActivity extends StatefulWidget {
   @override

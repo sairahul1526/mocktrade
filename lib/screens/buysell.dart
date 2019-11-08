@@ -1,17 +1,14 @@
 import 'package:flutter/material.dart';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:mocktrade/alert.dart';
 import 'package:modal_progress_hud/modal_progress_hud.dart';
 import 'package:slider_button/slider_button.dart';
-
-import './models.dart';
-
 import 'package:web_socket_channel/io.dart';
 import 'dart:convert';
 
-import './config.dart';
-import './utils.dart';
+import './alert.dart';
+import '../utils/models.dart';
+import '../utils/config.dart';
+import '../utils/utils.dart';
 
 class BuySellActivity extends StatefulWidget {
   final int id;

@@ -1,18 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'package:cloud_firestore/cloud_firestore.dart';
-
-import 'package:mocktrade/buysell.dart';
-import 'package:mocktrade/orders.dart';
-import 'package:mocktrade/portfolio.dart';
-import 'package:mocktrade/search.dart';
-
-import 'dart:convert';
-import 'package:web_socket_channel/io.dart';
-
-import './config.dart';
-import './models.dart';
-import './utils.dart';
+import './orders.dart';
+import './portfolio.dart';
 
 class PositionsActivity extends StatefulWidget {
   @override

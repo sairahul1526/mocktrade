@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:mocktrade/config.dart';
-import 'package:mocktrade/dashboard.dart';
 
-import './utils.dart';
+import './dashboard.dart';
+import '../utils/utils.dart';
+import '../utils/config.dart';
 
 class LoginActivity extends StatefulWidget {
   LoginActivity();

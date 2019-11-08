@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:mocktrade/account.dart';
-import 'package:mocktrade/orders.dart';
-import 'package:mocktrade/portfolio.dart';
-import 'package:mocktrade/positions.dart';
-import 'package:mocktrade/watchlist.dart';
+
+import './account.dart';
+import './orders.dart';
+import './portfolio.dart';
+import './watchlist.dart';
 
 class DashboardActivity extends StatefulWidget {
   DashboardActivity();

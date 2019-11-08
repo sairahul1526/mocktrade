@@ -1,16 +1,8 @@
 import 'package:flutter/material.dart';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-import 'package:mocktrade/buysell.dart';
-import 'package:mocktrade/search.dart';
-
-import 'dart:convert';
-import 'package:web_socket_channel/io.dart';
-
-import './config.dart';
-import './models.dart';
-import './utils.dart';
+import '../utils/config.dart';
+import '../utils/utils.dart';
 
 class OrdersActivity extends StatefulWidget {
   @override

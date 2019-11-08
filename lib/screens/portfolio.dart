@@ -1,17 +1,11 @@
 import 'package:flutter/material.dart';
-
 import 'package:cloud_firestore/cloud_firestore.dart';
-
-import 'package:mocktrade/buysell.dart';
-import 'package:mocktrade/orders.dart';
-import 'package:mocktrade/search.dart';
-
 import 'dart:convert';
 import 'package:web_socket_channel/io.dart';
 
-import './config.dart';
-import './models.dart';
-import './utils.dart';
+import './buysell.dart';
+import '../utils/config.dart';
+import '../utils/utils.dart';
 
 class PortfolioActivity extends StatefulWidget {
   @override
@@ -235,11 +229,13 @@ class PortfolioActivityState extends State<PortfolioActivity>
                                         ),
                                       ),
                                       new Text(
-                                        invested != 0 ? ("  " +
-                                            (pandl > 0 ? "+" : "") +
-                                            (pandl * 100 / invested)
-                                                .toStringAsFixed(2) +
-                                            "%") : "",
+                                        invested != 0
+                                            ? ("  " +
+                                                (pandl > 0 ? "+" : "") +
+                                                (pandl * 100 / invested)
+                                                    .toStringAsFixed(2) +
+                                                "%")
+                                            : "",
                                         style: TextStyle(
                                           color: pandl > 0
                                               ? Colors.green
@@ -329,7 +325,8 @@ class PortfolioActivityState extends State<PortfolioActivity>
                                                                           .data[
                                                                       "shares"]) -
                                                               positions[i].data[
-                                                                  "invested"]) * 100 /
+                                                                  "invested"]) *
+                                                          100 /
                                                           positions[i]
                                                               .data["invested"])
                                                       .toStringAsFixed(2) +
