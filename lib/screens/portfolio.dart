@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:convert';
 import 'package:web_socket_channel/io.dart';
+import 'package:pull_to_refresh/pull_to_refresh.dart';
 
 import './buysell.dart';
 import '../utils/config.dart';
 import '../utils/utils.dart';
+import '../utils/models.dart';
+import '../utils/api.dart';
 
 class PortfolioActivity extends StatefulWidget {
   @override
@@ -24,28 +26,51 @@ class PortfolioActivityState extends State<PortfolioActivity>
       "wss://ws.kite.trade?api_key=" + apiKey + "&access_token=" + accessToken);
   Map<int, double> tickers = new Map();
 
-  List<DocumentSnapshot> positions = new List();
-
-  double invested = 0;
-  double current = 0;
   double pandl = 0;
 
+  RefreshController _refreshController =
+      RefreshController(initialRefresh: false);
+      
   @override
   void initState() {
     super.initState();
 
-    Firestore.instance
-        .collection("marketwatch")
-        .document(phone)
-        .collection("positions")
-        .snapshots()
-        .listen((data) {
-      positions.clear();
-      data.documents.forEach((doc) {
-        positions.add(doc);
-      });
-      getData();
+    getData();
+  }
+
+  void positionsapi() {
+    checkInternet().then((internet) {
+      if (internet == null || !internet) {
+        oneButtonDialog(context, "No Internet connection", "", true);
+        _refreshController.refreshCompleted();
+      } else {
+        Future<Positions> data = getPositions({"user_id": userID});
+        data.then((response) {
+          if (response.positions != null && response.positions.length > 0) {
+            positionsMap.clear();
+            positions.clear();
+            response.positions.forEach((position) {
+              positionsMap[position.ticker] = position;
+              positions.add(position);
+            });
+            setState(() {
+              positionsMap = positionsMap;
+              positions = positions;
+            });
+            _refreshController.refreshCompleted();
+            getData();
+          }
+          if (response.meta != null && response.meta.messageType == "1") {
+            oneButtonDialog(context, "", response.meta.message,
+                !(response.meta.status == STATUS_403));
+          }
+        });
+      }
     });
+  }
+
+  void _onRefresh() async {
+    positionsapi();
   }
 
   void splitdata(List<int> data) {
@@ -65,10 +90,10 @@ class PortfolioActivityState extends State<PortfolioActivity>
     current = 0;
     pandl = 0;
     for (var position in positions) {
-      if (tickers[int.parse(position.documentID)] != null) {
-        invested += position.data["invested"];
+      if (tickers[int.parse(position.ticker)] != null) {
+        invested += double.parse(position.invested);
         current +=
-            tickers[int.parse(position.documentID)] * position.data["shares"];
+            tickers[int.parse(position.ticker)] * double.parse(position.shares);
       }
 
       pandl = current - invested;
@@ -78,12 +103,13 @@ class PortfolioActivityState extends State<PortfolioActivity>
   getData() {
     List<int> ids = new List();
 
-    positions.forEach((f) => ids.add(int.parse(f.documentID)));
+    positions.forEach((f) => ids.add(int.parse(f.ticker)));
     Map<String, dynamic> message = {
       "a": "mode",
       "v": ["ltp", ids]
     };
     channel.sink.add(jsonEncode(message));
+    _refreshController.refreshCompleted();
   }
 
   @override
@@ -100,6 +126,7 @@ class PortfolioActivityState extends State<PortfolioActivity>
         title: new Text(
           "Portfolio",
           style: TextStyle(
+            letterSpacing: 2,
             fontWeight: FontWeight.w800,
             color: Colors.black,
             fontSize: 25,
@@ -263,7 +290,10 @@ class PortfolioActivityState extends State<PortfolioActivity>
                       height: 20,
                     ),
                     new Expanded(
-                      child: new ListView.separated(
+                      child: new SmartRefresher(
+                              onRefresh: _onRefresh,
+                              controller: _refreshController,
+                        child: new ListView.separated(
                         itemCount: positions.length,
                         separatorBuilder: (context, i) {
                           return new Divider();
@@ -275,17 +305,13 @@ class PortfolioActivityState extends State<PortfolioActivity>
                                 context,
                                 MaterialPageRoute(
                                     builder: (context) => new BuySellActivity(
-                                        int.parse(tickerMap[int.parse(
-                                                positions[i].documentID)]
-                                            .instrumentToken),
-                                        tickerMap[int.parse(
-                                                positions[i].documentID)]
-                                            .tradingSymbol,
+                                       tickerMap[positions[i].ticker].instrumentToken,
+                                        tickerMap[positions[i].ticker].tradingSymbol,
                                         true)),
                               );
                             },
                             child: tickers[
-                                        int.parse(positions[i].documentID)] !=
+                                        int.parse(positions[i].ticker)] !=
                                     null
                                 ? new Container(
                                     color: Colors.transparent,
@@ -303,7 +329,7 @@ class PortfolioActivityState extends State<PortfolioActivity>
                                                 children: <Widget>[
                                                   new Text(
                                                     positions[i]
-                                                        .data["shares"]
+                                                        .shares
                                                         .toString(),
                                                     style: TextStyle(
                                                         fontSize: 12,
@@ -320,34 +346,28 @@ class PortfolioActivityState extends State<PortfolioActivity>
                                             ),
                                             new Text(
                                               (((tickers[int.parse(positions[i]
-                                                                      .documentID)] *
-                                                                  positions[i]
-                                                                          .data[
-                                                                      "shares"]) -
-                                                              positions[i].data[
-                                                                  "invested"]) *
+                                                                      .ticker)] *
+                                                                  double.parse(positions[i]
+                                                                          .shares)) -
+                                                              double.parse(positions[i].invested)) *
                                                           100 /
-                                                          positions[i]
-                                                              .data["invested"])
+                                                          double.parse(positions[i].invested))
                                                       .toStringAsFixed(2) +
                                                   " %",
                                               style: TextStyle(
                                                 color: (tickers[int.parse(
                                                                 positions[i]
-                                                                    .documentID)] *
-                                                            positions[i].data[
-                                                                "shares"]) >
-                                                        positions[i]
-                                                            .data["invested"]
+                                                                    .ticker)] *
+                                                            double.parse(positions[i].shares)) >
+                                                        double.parse(positions[i]
+                                                            .invested)
                                                     ? Colors.green
                                                     : ((tickers[int.parse(
                                                                     positions[i]
-                                                                        .documentID)] *
-                                                                positions[i]
-                                                                        .data[
-                                                                    "shares"]) <
-                                                            positions[i]
-                                                                .data["invested"]
+                                                                        .ticker)] *
+                                                                double.parse(positions[i]
+                                                                        .shares)) <
+                                                            double.parse(positions[i].invested)
                                                         ? Colors.red
                                                         : Colors.black),
                                                 fontSize: 12,
@@ -363,36 +383,30 @@ class PortfolioActivityState extends State<PortfolioActivity>
                                               MainAxisAlignment.spaceBetween,
                                           children: <Widget>[
                                             new Text(
-                                              tickerMap[int.parse(
-                                                      positions[i].documentID)]
-                                                  .tradingSymbol,
+                                              tickerMap[positions[i].ticker].tradingSymbol,
                                               style: TextStyle(
                                                 fontSize: 15,
                                               ),
                                             ),
                                             new Text(
                                               ((tickers[int.parse(positions[i]
-                                                              .documentID)] *
-                                                          positions[i]
-                                                              .data["shares"]) -
-                                                      positions[i]
-                                                          .data["invested"])
+                                                              .ticker)] *
+                                                          double.parse(positions[i]
+                                                              .shares)) -
+                                                      double.parse(positions[i]
+                                                          .invested))
                                                   .toStringAsFixed(2),
                                               style: TextStyle(
                                                   color: (tickers[int.parse(
                                                                   positions[i]
-                                                                      .documentID)] *
-                                                              positions[i].data[
-                                                                  "shares"]) >
-                                                          positions[i]
-                                                              .data["invested"]
+                                                                      .ticker)] *
+                                                              double.parse(positions[i].shares)) >
+                                                          double.parse(positions[i].invested)
                                                       ? Colors.green
-                                                      : ((tickers[int.parse(positions[i].documentID)] *
-                                                                  positions[i]
-                                                                          .data[
-                                                                      "shares"]) <
-                                                              positions[i].data[
-                                                                  "invested"]
+                                                      : ((tickers[int.parse(positions[i].ticker)] *
+                                                                  double.parse(positions[i]
+                                                                          .shares)) <
+                                                              double.parse(positions[i].invested)
                                                           ? Colors.red
                                                           : Colors.black)),
                                             ),
@@ -415,8 +429,7 @@ class PortfolioActivityState extends State<PortfolioActivity>
                                                   ),
                                                 ),
                                                 new Text(
-                                                  positions[i]
-                                                      .data["invested"]
+                                                  double.parse(positions[i].invested)
                                                       .toStringAsFixed(2),
                                                   style: TextStyle(
                                                     color: Colors.black,
@@ -434,9 +447,9 @@ class PortfolioActivityState extends State<PortfolioActivity>
                                                     fontSize: 12,
                                                   ),
                                                 ),
-                                                new Text(
+                                                new Text( 
                                                   tickers[int.parse(positions[i]
-                                                          .documentID)]
+                                                          .ticker)]
                                                       .toStringAsFixed(2),
                                                   style: TextStyle(
                                                     color: Colors.black,
@@ -453,6 +466,7 @@ class PortfolioActivityState extends State<PortfolioActivity>
                                 : new Container(),
                           );
                         },
+                      ),
                       ),
                     ),
                   ],

@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-
 class Ticker {
   String instrumentToken; // get data from kite
   String exchangeToken;
@@ -78,6 +76,135 @@ class Amount {
   }
 }
 
+// login
+
+class Logins {
+  final List<Login> logins;
+  final Meta meta;
+  final Pagination pagination;
+
+  Logins({this.logins, this.meta, this.pagination});
+
+  factory Logins.fromJson(Map<String, dynamic> json) {
+    return Logins(
+      logins: json['data'] != null
+          ? List<Login>.from(json['data'].map((i) => Login.fromJson(i)))
+          : new List<Login>(),
+      meta: Meta.fromJson(json['meta']),
+      pagination: json['pagination'] != null
+          ? Pagination.fromJson(json['pagination'])
+          : null,
+    );
+  }
+}
+
+class Login {
+  final String url;
+
+  Login({this.url});
+
+  factory Login.fromJson(Map<String, dynamic> json) {
+    return Login(
+      url: json['url'],
+    );
+  }
+}
+
+// timing
+
+class Timings {
+  final List<Timing> timings;
+  final Meta meta;
+  final Pagination pagination;
+
+  Timings({this.timings, this.meta, this.pagination});
+
+  factory Timings.fromJson(Map<String, dynamic> json) {
+    return Timings(
+      timings: json['data'] != null
+          ? List<Timing>.from(json['data'].map((i) => Timing.fromJson(i)))
+          : new List<Timing>(),
+      meta: Meta.fromJson(json['meta']),
+      pagination: json['pagination'] != null
+          ? Pagination.fromJson(json['pagination'])
+          : null,
+    );
+  }
+}
+
+class Timing {
+  final String id;
+  final String day;
+  final String holiday;
+  final String open;
+  final String close;
+  final String status;
+  final String createdDateTime;
+  final String modifiedDateTime;
+
+  Timing(
+      {this.id,
+      this.day,
+      this.holiday,
+      this.open,
+      this.close,
+      this.status,
+      this.createdDateTime,
+      this.modifiedDateTime});
+
+  factory Timing.fromJson(Map<String, dynamic> json) {
+    return Timing(
+      id: json['id'],
+      day: json['day'],
+      holiday: json['holiday'],
+      open: json['open'],
+      close: json['close'],
+      status: json['status'],
+      createdDateTime: json['created_date_time'],
+      modifiedDateTime: json['modified_date_time'],
+    );
+  }
+}
+
+// token
+
+class Tokens {
+  final List<Token> tokens;
+  final Meta meta;
+  final Pagination pagination;
+
+  Tokens({this.tokens, this.meta, this.pagination});
+
+  factory Tokens.fromJson(Map<String, dynamic> json) {
+    return Tokens(
+      tokens: json['data'] != null
+          ? List<Token>.from(json['data'].map((i) => Token.fromJson(i)))
+          : new List<Token>(),
+      meta: Meta.fromJson(json['meta']),
+      pagination: json['pagination'] != null
+          ? Pagination.fromJson(json['pagination'])
+          : null,
+    );
+  }
+}
+
+class Token {
+  final String token;
+  final String userID;
+
+  Token({
+    this.token,
+    this.userID,
+  });
+
+  factory Token.fromJson(Map<String, dynamic> json) {
+    return Token(
+      token: json['token'],
+      userID: json['userid'],
+    );
+  }
+}
+
 // order
 
 class Orders {
@@ -104,8 +231,11 @@ class Order {
   final String id;
   final String userID;
   final String ticker;
+  final String name;
+  final String exchange;
   final String price;
   final String shares;
+  final String invested;
   final String type;
   final String status;
   final String createdDateTime;
@@ -115,8 +245,11 @@ class Order {
       {this.id,
       this.userID,
       this.ticker,
+      this.name,
+      this.exchange,
       this.price,
       this.shares,
+      this.invested,
       this.type,
       this.status,
       this.createdDateTime,
@@ -127,8 +260,11 @@ class Order {
       id: json['id'],
       userID: json['user_id'],
       ticker: json['ticker'],
+      name: json['name'],
+      exchange: json['exchange'],
       price: json['price'],
       shares: json['shares'],
+      invested: json['invested'],
       type: json['type'],
       status: json['status'],
       createdDateTime: json['created_date_time'],
@@ -136,7 +272,6 @@ class Order {
     );
   }
 }
-
 
 // position
 
@@ -164,8 +299,8 @@ class Position {
   final String id;
   final String userID;
   final String ticker;
-  final String invested;
-  final String shares;
+  String invested;
+  String shares;
   final String status;
   final String createdDateTime;
   final String modifiedDateTime;
@@ -193,8 +328,6 @@ class Position {
     );
   }
 }
-
-
 
 // watchlist
 

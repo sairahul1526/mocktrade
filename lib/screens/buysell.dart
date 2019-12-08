@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:mocktrade/utils/api.dart';
 import 'package:modal_progress_hud/modal_progress_hud.dart';
 import 'package:slider_button/slider_button.dart';
 import 'package:web_socket_channel/io.dart';
@@ -11,7 +11,7 @@ import '../utils/config.dart';
 import '../utils/utils.dart';
 
 class BuySellActivity extends StatefulWidget {
-  final int id;
+  final String id;
   final String symbol;
   final bool sell;
 
@@ -28,12 +28,10 @@ class BuySellActivityState extends State<BuySellActivity> {
 
   TextEditingController shares = new TextEditingController();
 
-  String amount = "";
-  double availableamount = 0;
-
   List<Ticker> tickerBuySellList = new List();
 
-  int id;
+  String requiredAmount = "";
+  String id;
   String symbol;
   bool sell;
 
@@ -63,27 +61,33 @@ class BuySellActivityState extends State<BuySellActivity> {
     super.initState();
 
     shares.text = tickerMap[id].lotSize;
-    Firestore.instance
-        .collection("marketwatch")
-        .document(phone)
-        .collection("amount")
-        .snapshots()
-        .listen((data) {
-      data.documents.forEach((doc) {
-        setState(() {
-          availableamount = doc.data["total"] + .0;
-        });
-      });
-    });
-
     Map<String, dynamic> message = {
       "a": "mode",
       "v": [
         "quote",
-        [id]
+        [int.parse(id)]
       ]
     };
     channel.sink.add(jsonEncode(message));
+  }
+
+  void amountsapi() {
+    checkInternet().then((internet) {
+      if (internet == null || !internet) {
+        oneButtonDialog(context, "No Internet connection", "", true);
+      } else {
+        Future<Amounts> data = getAmounts({"user_id": userID});
+        data.then((response) {
+          if (response.amounts != null && response.amounts.length > 0) {
+            amount = double.parse(response.amounts[0].amount);
+          }
+          if (response.meta != null && response.meta.messageType == "1") {
+            oneButtonDialog(context, "", response.meta.message,
+                !(response.meta.status == STATUS_403));
+          }
+        });
+      }
+    });
   }
 
   void splitdata(List<int> data) {
@@ -119,6 +123,9 @@ class BuySellActivityState extends State<BuySellActivity> {
           width: width * 0.65,
           height: 65,
           action: () {
+            setState(() {
+              loading = true;
+            });
             if (!isMarketOpen()) {
               closeActivity("Rejected",
                   "Order was placed outside of trading hours.", false);
@@ -134,105 +141,96 @@ class BuySellActivityState extends State<BuySellActivity> {
                     "Quantity has to be multiple of lot size.", false);
                 return;
               }
-              if (sell) {
-                if (positionsMap[id.toString()] == null) {
-                  closeActivity(
-                      "Rejected", "Shares not available to sell.", false);
-                  return;
-                }
-                if (positionsMap[id.toString()].data["shares"] <
-                    int.parse(shares.text)) {
-                  setState(() {
-                    buyselbutton = getbuyselbutton();
-                  });
-                  closeActivity(
-                      "Rejected",
-                      "Only " +
-                          positionsMap[id.toString()]
-                              .data["shares"]
-                              .toString() +
-                          " shares are available to sell",
-                      false);
-                  return;
-                }
-              } else {
-                if (int.parse(shares.text) * lastTradedPrice >
-                    availableamount) {
-                  setState(() {
-                    buyselbutton = getbuyselbutton();
-                  });
-                  closeActivity(
-                      "Rejected",
-                      "Only " +
-                          "Amount Required " +
-                          (int.parse(shares.text) * lastTradedPrice)
-                              .toStringAsFixed(2),
-                      false);
-                  return;
-                }
-              }
-              setState(() {
-                loading = true;
+              var price = lastTradedPrice;
+              var invested = double.parse(shares.text) * price;
+              Future<dynamic> load = addGetResponse(API.BUYSELL, {
+                "user_id": userID,
+                "ticker": id.toString(),
+                "name": tickerMap[id].tradingSymbol,
+                "exchange": tickerMap[id].segment,
+                "shares": int.parse(shares.text).toString(),
+                "price": price.toStringAsFixed(2),
+                "invested": invested.toStringAsFixed(2),
+                "type": sell ? "0" : "1",
               });
-              Firestore.instance
-                  .collection("marketwatch")
-                  .document(phone)
-                  .collection("orders")
-                  .add({
-                "id": id,
-                "shares": int.parse(shares.text),
-                "price": lastTradedPrice,
-                "type": sell ? 0 : 1,
-                "time": DateTime.now().millisecondsSinceEpoch,
-              }).then((onValue) {
-                Firestore.instance
-                    .collection("marketwatch")
-                    .document(phone)
-                    .collection("amount")
-                    .document("amount")
-                    .setData({
-                  "total": FieldValue.increment(sell
-                      ? double.parse((int.parse(shares.text) * lastTradedPrice)
-                          .toStringAsFixed(2))
-                      : -double.parse((int.parse(shares.text) * lastTradedPrice)
-                          .toStringAsFixed(2))),
-                }, merge: true).then((onValue) {
-                  if (sell &&
-                      positionsMap[id.toString()].data["shares"] ==
-                          int.parse(shares.text)) {
-                    Firestore.instance
-                        .collection("marketwatch")
-                        .document(phone)
-                        .collection("positions")
-                        .document(id.toString())
-                        .delete()
-                        .then((onValue) {
-                      closeActivity(
-                          "Completed", "Order successfully placed", true);
-                    });
+              load.then((onValue) {
+                if (onValue != null) {
+                  if (onValue["meta"]["status"] == "200" ||
+                      onValue["meta"]["status"] == "201") {
+                    orders.insert(
+                        0,
+                        new Order(
+                            userID: userID,
+                            ticker: id.toString(),
+                            name: tickerMap[id].tradingSymbol,
+                            exchange: tickerMap[id].segment,
+                            shares: int.parse(shares.text).toString(),
+                            price: price.toString(),
+                            invested: invested.toStringAsFixed(2),
+                            type: sell ? "0" : "1",
+                            createdDateTime: DateTime.now().toString()));
+                    if (positionsMap[id.toString()] != null) {
+                      var positionInvested =
+                          positionsMap[id.toString()].invested;
+                      var positionShares = positionsMap[id.toString()].shares;
+                      for (var i = 0; i < positions.length; i++) {
+                        if (positions[i].ticker == id.toString()) {
+                          positions[i].invested =
+                              (double.parse(positionInvested) +
+                                      (sell ? -invested : invested))
+                                  .toStringAsFixed(2);
+                          positions[i].shares = (int.parse(positionShares) +
+                                  (sell
+                                      ? -int.parse(shares.text)
+                                      : int.parse(shares.text)))
+                              .toString();
+                          break;
+                        }
+                      }
+                      positionsMap[id.toString()].invested =
+                          (double.parse(positionInvested) +
+                                  (sell
+                                      ? -(double.parse(shares.text) *
+                                          lastTradedPrice)
+                                      : (double.parse(shares.text) *
+                                          lastTradedPrice)))
+                              .toStringAsFixed(2);
+                      positionsMap[id.toString()].shares =
+                          (int.parse(positionShares) +
+                                  (sell
+                                      ? -int.parse(shares.text)
+                                      : int.parse(shares.text)))
+                              .toString();
+                    } else {
+                      positions.insert(
+                          0,
+                          new Position(
+                            userID: userID,
+                            ticker: id.toString(),
+                            invested:
+                                (double.parse(shares.text) * lastTradedPrice)
+                                    .toString(),
+                            shares: int.parse(shares.text).toString(),
+                            status: "1",
+                          ));
+                      positionsMap[id.toString()] = new Position(
+                        userID: userID,
+                        ticker: id.toString(),
+                        invested: (double.parse(shares.text) * lastTradedPrice)
+                            .toString(),
+                        shares: int.parse(shares.text).toString(),
+                        status: "1",
+                      );
+                    }
+                    closeActivity(
+                        "Completed", "Order successfully placed", true);
                   } else {
-                    Firestore.instance
-                        .collection("marketwatch")
-                        .document(phone)
-                        .collection("positions")
-                        .document(id.toString())
-                        .setData({
-                      "shares": FieldValue.increment(sell
-                          ? -int.parse(shares.text)
-                          : int.parse(shares.text)),
-                      "invested": FieldValue.increment(sell
-                          ? -double.parse(
-                              (int.parse(shares.text) * lastTradedPrice)
-                                  .toStringAsFixed(2))
-                          : double.parse(
-                              (int.parse(shares.text) * lastTradedPrice)
-                                  .toStringAsFixed(2))),
-                    }, merge: true).then((onValue) {
-                      closeActivity(
-                          "Completed", "Order successfully placed", true);
-                    });
+                    closeActivity(
+                        "Rejected", onValue["meta"]["message"], false);
                   }
-                });
+                } else {
+                  closeActivity("Rejected", "Order not placed", false);
+                }
               });
             }
           },
@@ -290,6 +288,10 @@ class BuySellActivityState extends State<BuySellActivity> {
             builder: (context, snapshot) {
               if (snapshot.hasData) {
                 splitdata(snapshot.data);
+                if (requiredAmount.length == 0 && lastTradedPrice != null) {
+                  requiredAmount =
+                      (lastTradedPrice * int.parse(shares.text)).toString();
+                }
               }
               return new ListView(
                 // crossAxisAlignment: CrossAxisAlignment.start,
@@ -327,11 +329,9 @@ class BuySellActivityState extends State<BuySellActivity> {
                   new Text(
                     (sell
                             ? (positionsMap[id.toString()] != null
-                                ? positionsMap[id.toString()]
-                                    .data["shares"]
-                                    .toString()
+                                ? positionsMap[id.toString()].shares
                                 : "")
-                            : availableamount.toStringAsFixed(2)) +
+                            : amount.toString()) +
                         (sell ? " shares" : " amount") +
                         " available",
                     style: TextStyle(
@@ -355,13 +355,15 @@ class BuySellActivityState extends State<BuySellActivity> {
                         width: width * 0.25,
                         child: new TextField(
                           onChanged: (text) {
-                            if (text.length > 0) {
+                            if (text.length > 0 && lastTradedPrice != null) {
                               setState(() {
-                                amount = text;
+                                requiredAmount =
+                                    (lastTradedPrice * int.parse(shares.text))
+                                        .toStringAsFixed(2);
                               });
                             } else {
                               setState(() {
-                                amount = "";
+                                requiredAmount = "0";
                               });
                             }
                           },
@@ -396,10 +398,7 @@ class BuySellActivityState extends State<BuySellActivity> {
                         ),
                       ),
                       new Text(
-                        (shares.text.length > 0 && lastTradedPrice != null
-                            ? (lastTradedPrice * int.parse(shares.text))
-                                .toStringAsFixed(2)
-                            : "0"),
+                        requiredAmount,
                         style: TextStyle(
                           fontSize: 16,
                         ),

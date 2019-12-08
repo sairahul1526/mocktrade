@@ -11,7 +11,7 @@
 
     <application
         android:name="io.flutter.app.FlutterApplication"
-        android:label="Cloud PG"
+        android:label="Mock Trade"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"

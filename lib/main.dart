@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:mocktrade/utils/api.dart';
 import 'dart:convert';
+import 'dart:io' show Platform;
 
 import './screens/dashboard.dart';
 import './screens/login.dart';
@@ -39,24 +40,67 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    Firestore.instance
-        .collection("token")
-        .document("token")
-        .get()
-        .then((DocumentSnapshot ds) {
-      accessToken = ds.data["token"];
+
+    if (Platform.isAndroid) {
+      headers["appversion"] = APPVERSION.ANDROID;
+      if (kReleaseMode) {
+        headers["apikey"] = APIKEY.ANDROID_LIVE;
+      } else {
+        headers["apikey"] = APIKEY.ANDROID_TEST;
+      }
+    } else {
+      headers["appversion"] = APPVERSION.IOS;
+      if (kReleaseMode) {
+        headers["apikey"] = APIKEY.IOS_LIVE;
+      } else {
+        headers["apikey"] = APIKEY.IOS_TEST;
+      }
+    }
+    timingsapi();
+  }
+
+  void timingsapi() {
+    checkInternet().then((internet) {
+      if (internet == null || !internet) {
+        oneButtonDialog(context, "No Internet connection", "", true);
+      } else {
+        Future<Timings> data = getTimings({"day": DateTime.now().weekday.toString()});
+        data.then((response) {
+          if (response.timings != null && response.timings.length > 0) {
+            holiday = response.timings[0].holiday == "1";
+            List<String> opening = response.timings[0].open.split(":");
+            List<String> closing = response.timings[0].close.split(":");
+            open = new DateTime(
+                DateTime.now().year,
+                DateTime.now().month,
+                DateTime.now().day,
+                int.parse(opening[0]),
+                int.parse(opening[1]),
+                0,
+                0,
+                0);
+            close = new DateTime(
+                DateTime.now().year,
+                DateTime.now().month,
+                DateTime.now().day,
+                int.parse(closing[0]),
+                int.parse(closing[1]),
+                0,
+                0,
+                0);
+
+            tickers();
+          }
+          if (response.meta != null && response.meta.messageType == "1") {
+            oneButtonDialog(context, "", response.meta.message,
+                !(response.meta.status == STATUS_403));
+          }
+        });
+      }
     });
-    Firestore.instance
-        .collection("timing")
-        .document(DateTime.now().weekday.toString())
-        .get()
-        .then((DocumentSnapshot ds) {
-      holiday = ds.data["holiday"];
-      List<String> opening = ds.data["open"].split(":");
-      List<String> closing = ds.data["close"].split(":");
-      open = new DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day, int.parse(opening[0]), int.parse(opening[1]), 0, 0, 0);
-      close = new DateTime(DateTime.now().year, DateTime.now().month, DateTime.now().day, int.parse(closing[0]), int.parse(closing[1]), 0, 0, 0);
-    });
+  }
+
+  void tickers() {
     getTickers().then((response) {
       LineSplitter ls = new LineSplitter();
       List<String> tickerDetails = new List();
@@ -68,7 +112,7 @@ class _MyHomePageState extends State<MyHomePage> {
           continue;
         }
         tickerDetails = line.split(",");
-        tickerMap[int.parse(tickerDetails[0])] = new Ticker(
+        tickerMap[tickerDetails[0]] = new Ticker(
             instrumentToken: tickerDetails[0],
             exchangeToken: tickerDetails[1],
             tradingSymbol: tickerDetails[2],
@@ -94,24 +138,37 @@ class _MyHomePageState extends State<MyHomePage> {
             exchange: tickerDetails[11]));
       }
 
-      Future<bool> prefInit = initSharedPreference();
-      prefInit.then((onValue) {
-        if (onValue) {
-          if (prefs.getString("phone") != null &&
-              prefs.getString("phone").length > 0) {
-            phone = prefs.getString("phone");
+      tokens();
+    });
+  }
 
-            Navigator.of(context).pushReplacement(new MaterialPageRoute(
-                builder: (BuildContext context) => new DashboardActivity()));
-          } else {
-            Navigator.of(context).pushReplacement(new MaterialPageRoute(
-                builder: (BuildContext context) => new LoginActivity()));
-          }
+  void tokens() {
+    Future<bool> prefInit = initSharedPreference();
+    prefInit.then((onValue) {
+      if (onValue) {
+        if (prefs.getString("accessToken") != null &&
+            prefs.getString("accessToken").length > 0) {
+          accessToken = prefs.getString("accessToken");
+          userID = prefs.getString("userID");
+
+          Future<bool> load = checkAccessToken();
+          load.then((response) {
+            if (response) {
+              Navigator.of(context).pushReplacement(new MaterialPageRoute(
+                  builder: (BuildContext context) => new DashboardActivity()));
+            } else {
+              Navigator.of(context).pushReplacement(new MaterialPageRoute(
+                  builder: (BuildContext context) => new LoginActivity()));
+            }
+          });
         } else {
           Navigator.of(context).pushReplacement(new MaterialPageRoute(
               builder: (BuildContext context) => new LoginActivity()));
         }
-      });
+      } else {
+        Navigator.of(context).pushReplacement(new MaterialPageRoute(
+            builder: (BuildContext context) => new LoginActivity()));
+      }
     });
   }
 

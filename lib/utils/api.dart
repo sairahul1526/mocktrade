@@ -15,9 +15,39 @@ Future<Amounts> getAmounts(Map<String, String> query) async {
   return Amounts.fromJson(json.decode(response.body));
 }
 
+// login
+
+Future<Logins> getLogins(Map<String, String> query) async {
+  final response = await http
+      .get(Uri.http(API.URL, API.LOGIN, query), headers: headers)
+      .timeout(Duration(seconds: timeout));
+
+  return Logins.fromJson(json.decode(response.body));
+}
+
+// timing
+
+Future<Timings> getTimings(Map<String, String> query) async {
+  final response = await http
+      .get(Uri.http(API.URL, API.TIMING, query), headers: headers)
+      .timeout(Duration(seconds: timeout));
+
+  return Timings.fromJson(json.decode(response.body));
+}
+
+// token
+
+Future<Tokens> getTokens(Map<String, String> query) async {
+  final response = await http
+      .get(Uri.http(API.URL, API.TOKEN, query), headers: headers)
+      .timeout(Duration(seconds: timeout));
+
+  return Tokens.fromJson(json.decode(response.body));
+}
+
 // order
 
-Future<Orders> getBills(Map<String, String> query) async {
+Future<Orders> getOrders(Map<String, String> query) async {
   final response = await http
       .get(Uri.http(API.URL, API.ORDER, query), headers: headers)
       .timeout(Duration(seconds: timeout));
@@ -27,7 +57,7 @@ Future<Orders> getBills(Map<String, String> query) async {
 
 // postion
 
-Future<Positions> getDashboards(Map<String, String> query) async {
+Future<Positions> getPositions(Map<String, String> query) async {
   final response = await http
       .get(Uri.http(API.URL, API.POSITIONS, query), headers: headers)
       .timeout(Duration(seconds: timeout));
@@ -37,7 +67,7 @@ Future<Positions> getDashboards(Map<String, String> query) async {
 
 // watchlist
 
-Future<Watchlists> getEmployees(Map<String, String> query) async {
+Future<Watchlists> getWatchlists(Map<String, String> query) async {
   final response = await http
       .get(Uri.http(API.URL, API.WATCHLIST, query), headers: headers)
       .timeout(Duration(seconds: timeout));
@@ -65,6 +95,30 @@ Future<bool> add(String endpoint, Map<String, String> body) async {
     return true;
   }
   return false;
+}
+
+// add and update
+Future<dynamic> addGetResponse(
+    String endpoint, Map<String, String> body) async {
+  if (body["status"] != null) {
+    body["status"] = "1";
+  }
+  var request = new http.MultipartRequest(
+    "POST",
+    Uri.http(
+      API.URL,
+      endpoint,
+    ),
+  );
+  request.headers.addAll(headers);
+  body.forEach((k, v) => {request.fields[k] = v});
+
+  var response = await request.send();
+  var resp = await response.stream.bytesToString();
+  if (resp != null) {
+    return json.decode(resp);
+  }
+  return null;
 }
 
 Future<bool> update(String endpoint, Map<String, String> body,

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:mocktrade/utils/api.dart';
 import 'package:modal_progress_hud/modal_progress_hud.dart';
 
 import '../utils/utils.dart';
@@ -112,12 +112,14 @@ class SearchActivityState extends State<SearchActivity> {
                           marketwatch.forEach((watch) {
                             tickers.add(int.parse(watch.instrumentToken));
                           });
-                          Firestore.instance
-                              .collection("marketwatch")
-                              .document(phone)
-                              .collection("tickers")
-                              .document("tickers")
-                              .setData({"tickers": tickers}).then((onValue) {
+                          Future<bool> load = update(
+                            API.WATCHLIST,
+                            Map.from({
+                              "watchlist": tickers.join(","),
+                            }),
+                            Map.from({'user_id': userID}),
+                          );
+                          load.then((onValue) {
                             Navigator.of(context).pop();
                           });
                         },

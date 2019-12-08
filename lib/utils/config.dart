@@ -1,16 +1,21 @@
 import './models.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 List<Ticker> tickerList = new List();
-Map<int, Ticker> tickerMap = new Map();
-Map<String, DocumentSnapshot> positionsMap = new Map();
+Map<String, Ticker> tickerMap = new Map();
+Map<String, Position> positionsMap = new Map();
 
 List<Ticker> marketwatch = new List();
+List<Order> orders = new List();
+List<Position> positions = new List();
+
+double invested = 0;
+double current = 0;
 
 String apiKey = "cu50ienpvww2pb2o";
 String accessToken = "";
+String userID = "";
 
-String phone = "";
+double amount = 0;
 
 bool holiday = false;
 DateTime open = DateTime.now();
@@ -19,11 +24,14 @@ DateTime close = DateTime.now();
 class API {
   static const URL = "mocktrade1.ap-south-1.elasticbeanstalk.com";
   static const AMOUNT = "amount";
+  static const BUYSELL = "buysell";
+  static const LOGIN = "login";
+  static const TIMING = "timing";
+  static const TOKEN = "token";
   static const ORDER = "order";
   static const POSITIONS = "position";
   static const WATCHLIST = "watchlist";
 }
-
 
 class APPVERSION {
   static const ANDROID = "2.6";
@@ -38,7 +46,7 @@ class APIKEY {
 }
 
 Map<String, String> headers = {
-  "pkgname": "com.saikrishna.cloudpg",
+  "pkgname": "com.saikrishna.mocktrade",
   "Accept-Encoding": "gzip"
 };
 

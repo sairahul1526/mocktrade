@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:mocktrade/utils/api.dart';
+import 'package:mocktrade/utils/models.dart';
 import 'dart:convert';
 import 'package:web_socket_channel/io.dart';
+import 'package:pull_to_refresh/pull_to_refresh.dart';
 
 import '../main.dart';
 import '../utils/config.dart';
@@ -23,40 +25,37 @@ class AccountActivityState extends State<AccountActivity>
       "wss://ws.kite.trade?api_key=" + apiKey + "&access_token=" + accessToken);
   Map<int, double> tickers = new Map();
 
-  List<DocumentSnapshot> positions = new List();
-  double amount = 0;
-
-  double invested;
-  double current;
+  RefreshController _refreshController =
+      RefreshController(initialRefresh: false);
 
   @override
   void initState() {
     super.initState();
+  }
 
-    Firestore.instance
-        .collection("marketwatch")
-        .document(phone)
-        .collection("amount")
-        .snapshots()
-        .listen((data) {
-      data.documents.forEach((doc) {
-        setState(() {
-          amount = doc.data["total"] + .0;
+  void _onRefresh() async {
+    amountsapi();
+    getData();
+  }
+
+  void amountsapi() {
+    checkInternet().then((internet) {
+      if (internet == null || !internet) {
+        oneButtonDialog(context, "No Internet connection", "", true);
+        _refreshController.refreshCompleted();
+      } else {
+        Future<Amounts> data = getAmounts({"user_id": userID});
+        data.then((response) {
+          _refreshController.refreshCompleted();
+          if (response.amounts != null && response.amounts.length > 0) {
+            amount = double.parse(response.amounts[0].amount);
+          }
+          if (response.meta != null && response.meta.messageType == "1") {
+            oneButtonDialog(context, "", response.meta.message,
+                !(response.meta.status == STATUS_403));
+          }
         });
-      });
-    });
-
-    Firestore.instance
-        .collection("marketwatch")
-        .document(phone)
-        .collection("positions")
-        .snapshots()
-        .listen((data) {
-      positions.clear();
-      data.documents.forEach((doc) {
-        positions.add(doc);
-      });
-      getData();
+      }
     });
   }
 
@@ -76,10 +75,10 @@ class AccountActivityState extends State<AccountActivity>
     invested = 0;
     current = 0;
     for (var position in positions) {
-      if (tickers[int.parse(position.documentID)] != null) {
-        invested += position.data["invested"];
+      if (tickers[int.parse(position.ticker)] != null) {
+        invested += double.parse(position.invested);
         current +=
-            tickers[int.parse(position.documentID)] * position.data["shares"];
+            tickers[int.parse(position.ticker)] * double.parse(position.shares);
       }
     }
   }
@@ -87,7 +86,7 @@ class AccountActivityState extends State<AccountActivity>
   getData() {
     List<int> ids = new List();
 
-    positions.forEach((f) => ids.add(int.parse(f.documentID)));
+    positions.forEach((f) => ids.add(int.parse(f.ticker)));
     Map<String, dynamic> message = {
       "a": "mode",
       "v": ["ltp", ids]
@@ -109,6 +108,7 @@ class AccountActivityState extends State<AccountActivity>
         title: new Text(
           "Account",
           style: TextStyle(
+            letterSpacing: 2,
             fontWeight: FontWeight.w800,
             color: Colors.black,
             fontSize: 25,
@@ -120,166 +120,174 @@ class AccountActivityState extends State<AccountActivity>
         child: new SafeArea(
           child: new Container(
             padding: EdgeInsets.all(20),
-            child: new Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                new StreamBuilder(
-                    stream: channel.stream,
-                    builder: (context, snapshot) {
-                      if (snapshot.hasData && positions.length > 0) {
-                        splitdata(snapshot.data);
-                      }
-                      return new RaisedButton(
-                        shape: new RoundedRectangleBorder(
-                          borderRadius: new BorderRadius.circular(3.0),
-                          side: BorderSide(
-                            color: Colors.white,
+            child: new SmartRefresher(
+              onRefresh: _onRefresh,
+              controller: _refreshController,
+              child: new Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  new StreamBuilder(
+                      stream: channel.stream,
+                      builder: (context, snapshot) {
+                        if (snapshot.hasData && positions.length > 0) {
+                          splitdata(snapshot.data);
+                        }
+                        return new RaisedButton(
+                          shape: new RoundedRectangleBorder(
+                            borderRadius: new BorderRadius.circular(3.0),
+                            side: BorderSide(
+                              color: Colors.white,
+                            ),
                           ),
-                        ),
-                        color: Colors.white,
-                        elevation: 10,
-                        child: new Container(
-                          padding: EdgeInsets.fromLTRB(0, 10, 0, 10),
-                          child: new Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: <Widget>[
-                              new Container(
-                                margin: EdgeInsets.fromLTRB(0, 10, 0, 10),
-                                child: new Text(
-                                  current != null && amount != null
-                                      ? (current + amount).toStringAsFixed(2)
-                                      : (amount != null
-                                          ? amount.toStringAsFixed(2)
-                                          : ""),
-                                  style: TextStyle(
-                                    fontSize: 25,
+                          color: Colors.white,
+                          elevation: 10,
+                          child: new Container(
+                            padding: EdgeInsets.fromLTRB(0, 10, 0, 10),
+                            child: new Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: <Widget>[
+                                new Container(
+                                  margin: EdgeInsets.fromLTRB(0, 10, 0, 10),
+                                  child: new Text(
+                                    current != null && amount != null
+                                        ? (current + amount).toStringAsFixed(2)
+                                        : (amount != null
+                                            ? amount.toStringAsFixed(2)
+                                            : ""),
+                                    style: TextStyle(
+                                      fontSize: 25,
+                                    ),
                                   ),
                                 ),
-                              ),
-                              new Row(
-                                children: <Widget>[
-                                  new Container(
-                                    width: 10,
-                                  ),
-                                  new Expanded(
-                                    child: new Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: <Widget>[
-                                        new Text(
-                                          invested != null && amount != null
-                                              ? (invested *
-                                                          100 /
-                                                          (invested + amount))
-                                                      .toStringAsFixed(2) +
-                                                  " %"
-                                              : "0.00 %",
-                                          style: TextStyle(
-                                            color: Colors.black,
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w400,
-                                          ),
-                                        ),
-                                        new Text(
-                                          "Invested",
-                                          style: TextStyle(
-                                            color: Colors.grey,
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w400,
-                                          ),
-                                        )
-                                      ],
+                                new Row(
+                                  children: <Widget>[
+                                    new Container(
+                                      width: 10,
                                     ),
-                                  ),
-                                  new Expanded(
-                                    child: new Column(
-                                      children: <Widget>[
-                                        new Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: <Widget>[
-                                            new Text(
-                                              "Invested",
-                                              style: TextStyle(
-                                                color: Colors.grey,
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.w400,
-                                              ),
+                                    new Expanded(
+                                      child: new Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: <Widget>[
+                                          new Text(
+                                            invested != null && amount != null
+                                                ? (invested *
+                                                            100 /
+                                                            (invested + amount))
+                                                        .toStringAsFixed(2) +
+                                                    " %"
+                                                : "0.00 %",
+                                            style: TextStyle(
+                                              color: Colors.black,
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w400,
                                             ),
-                                            new Text(
-                                              invested != null
-                                                  ? invested.toStringAsFixed(2)
-                                                  : "0.00",
-                                              style: TextStyle(
-                                                color: Colors.black,
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.w400,
-                                              ),
-                                            )
-                                          ],
-                                        ),
-                                        new Divider(),
-                                        new Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: <Widget>[
-                                            new Text(
-                                              "Cash",
-                                              style: TextStyle(
-                                                color: Colors.grey,
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.w400,
-                                              ),
+                                          ),
+                                          new Text(
+                                            "Invested",
+                                            style: TextStyle(
+                                              color: Colors.grey,
+                                              fontSize: 15,
+                                              fontWeight: FontWeight.w400,
                                             ),
-                                            new Text(
-                                              amount.toStringAsFixed(2),
-                                              style: TextStyle(
-                                                color: Colors.black,
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.w400,
-                                              ),
-                                            )
-                                          ],
-                                        )
-                                      ],
+                                          )
+                                        ],
+                                      ),
                                     ),
-                                  )
-                                ],
-                              ),
-                              new Container(
-                                height: 10,
-                              ),
-                            ],
+                                    new Expanded(
+                                      child: new Column(
+                                        children: <Widget>[
+                                          new Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: <Widget>[
+                                              new Text(
+                                                "Invested",
+                                                style: TextStyle(
+                                                  color: Colors.grey,
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.w400,
+                                                ),
+                                              ),
+                                              new Text(
+                                                invested != null
+                                                    ? invested
+                                                        .toStringAsFixed(2)
+                                                    : "0.00",
+                                                style: TextStyle(
+                                                  color: Colors.black,
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.w400,
+                                                ),
+                                              )
+                                            ],
+                                          ),
+                                          new Divider(),
+                                          new Row(
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.spaceBetween,
+                                            children: <Widget>[
+                                              new Text(
+                                                "Cash",
+                                                style: TextStyle(
+                                                  color: Colors.grey,
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.w400,
+                                                ),
+                                              ),
+                                              new Text(
+                                                amount.toStringAsFixed(2),
+                                                style: TextStyle(
+                                                  color: Colors.black,
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.w400,
+                                                ),
+                                              )
+                                            ],
+                                          )
+                                        ],
+                                      ),
+                                    )
+                                  ],
+                                ),
+                                new Container(
+                                  height: 10,
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                        onPressed: () {},
-                      );
-                    }),
-                new Container(
-                  height: 20,
-                ),
-                new GestureDetector(
-                  onTap: () {
-                    prefs.clear();
-                    phone = "";
-                    Navigator.pop(context);
-                    Navigator.of(context).pushReplacement(new MaterialPageRoute(
-                        builder: (BuildContext context) => new MyHomePage()));
-                  },
-                  child: new Container(
-                    color: Colors.transparent,
-                    padding: EdgeInsets.all(20),
-                    child: new Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: <Widget>[
-                        new Text("Logout "),
-                        new Icon(Icons.exit_to_app)
-                      ],
+                          onPressed: () {},
+                        );
+                      }),
+                  new Container(
+                    height: 20,
+                  ),
+                  new GestureDetector(
+                    onTap: () {
+                      prefs.clear();
+                      accessToken = "";
+                      userID = "";
+                      Navigator.pop(context);
+                      Navigator.of(context).pushReplacement(
+                          new MaterialPageRoute(
+                              builder: (BuildContext context) =>
+                                  new MyHomePage()));
+                    },
+                    child: new Container(
+                      color: Colors.transparent,
+                      padding: EdgeInsets.all(20),
+                      child: new Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: <Widget>[
+                          new Text("Logout "),
+                          new Icon(Icons.exit_to_app)
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                new Divider(),
-              ],
+                  new Divider(),
+                ],
+              ),
             ),
           ),
         ),
