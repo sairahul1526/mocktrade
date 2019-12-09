@@ -101,13 +101,15 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
       } else {
         Future<Positions> data = getPositions({"user_id": userID});
         data.then((response) {
-          if (response.positions != null && response.positions.length > 0) {
+          if (response.positions != null) {
             positionsMap.clear();
             positions.clear();
-            response.positions.forEach((position) {
-              positionsMap[position.ticker] = position;
-              positions.add(position);
-            });
+            if (response.positions.length > 0) {
+              response.positions.forEach((position) {
+                positionsMap[position.ticker] = position;
+                positions.add(position);
+              });
+            }
             setState(() {
               positionsMap = positionsMap;
               positions = positions;

@@ -46,18 +46,20 @@ class PortfolioActivityState extends State<PortfolioActivity>
       } else {
         Future<Positions> data = getPositions({"user_id": userID});
         data.then((response) {
-          if (response.positions != null && response.positions.length > 0) {
+            _refreshController.refreshCompleted();
+          if (response.positions != null) {
             positionsMap.clear();
             positions.clear();
-            response.positions.forEach((position) {
-              positionsMap[position.ticker] = position;
-              positions.add(position);
-            });
+            if (response.positions.length > 0) {
+              response.positions.forEach((position) {
+                positionsMap[position.ticker] = position;
+                positions.add(position);
+              });
+            }
             setState(() {
               positionsMap = positionsMap;
               positions = positions;
             });
-            _refreshController.refreshCompleted();
             getData();
           }
           if (response.meta != null && response.meta.messageType == "1") {
@@ -103,6 +105,10 @@ class PortfolioActivityState extends State<PortfolioActivity>
   getData() {
     List<int> ids = new List();
 
+    if (positions.length == 0) {
+      invested = 0;
+      current = 0;
+    }
     positions.forEach((f) => ids.add(int.parse(f.ticker)));
     Map<String, dynamic> message = {
       "a": "mode",
@@ -305,8 +311,8 @@ class PortfolioActivityState extends State<PortfolioActivity>
                                 context,
                                 MaterialPageRoute(
                                     builder: (context) => new BuySellActivity(
-                                       tickerMap[positions[i].ticker].instrumentToken,
-                                        tickerMap[positions[i].ticker].tradingSymbol,
+                                       positions[i].ticker,
+                                        positions[i].name,
                                         true)),
                               );
                             },
@@ -383,7 +389,7 @@ class PortfolioActivityState extends State<PortfolioActivity>
                                               MainAxisAlignment.spaceBetween,
                                           children: <Widget>[
                                             new Text(
-                                              tickerMap[positions[i].ticker].tradingSymbol,
+                                              positions[i].name,
                                               style: TextStyle(
                                                 fontSize: 15,
                                               ),
