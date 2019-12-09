@@ -71,25 +71,6 @@ class BuySellActivityState extends State<BuySellActivity> {
     channel.sink.add(jsonEncode(message));
   }
 
-  void amountsapi() {
-    checkInternet().then((internet) {
-      if (internet == null || !internet) {
-        oneButtonDialog(context, "No Internet connection", "", true);
-      } else {
-        Future<Amounts> data = getAmounts({"user_id": userID});
-        data.then((response) {
-          if (response.amounts != null && response.amounts.length > 0) {
-            amount = double.parse(response.amounts[0].amount);
-          }
-          if (response.meta != null && response.meta.messageType == "1") {
-            oneButtonDialog(context, "", response.meta.message,
-                !(response.meta.status == STATUS_403));
-          }
-        });
-      }
-    });
-  }
-
   void splitdata(List<int> data) {
     if (data.length < 2) {
       return;
@@ -153,10 +134,10 @@ class BuySellActivityState extends State<BuySellActivity> {
                 "invested": invested.toStringAsFixed(2),
                 "type": sell ? "0" : "1",
               });
-              load.then((onValue) {
-                if (onValue != null) {
-                  if (onValue["meta"]["status"] == "200" ||
-                      onValue["meta"]["status"] == "201") {
+              load.then((response) {
+                if (response != null) {
+                  if (response["meta"]["status"] == "200" ||
+                      response["meta"]["status"] == "201") {
                     orders.insert(
                         0,
                         new Order(
@@ -207,6 +188,7 @@ class BuySellActivityState extends State<BuySellActivity> {
                           new Position(
                             userID: userID,
                             ticker: id.toString(),
+                            name: symbol,
                             invested:
                                 (double.parse(shares.text) * lastTradedPrice)
                                     .toString(),
@@ -216,22 +198,34 @@ class BuySellActivityState extends State<BuySellActivity> {
                       positionsMap[id.toString()] = new Position(
                         userID: userID,
                         ticker: id.toString(),
+                        name: symbol,
                         invested: (double.parse(shares.text) * lastTradedPrice)
                             .toString(),
                         shares: int.parse(shares.text).toString(),
                         status: "1",
                       );
                     }
+                    if (positionsMap[id.toString()].shares == "0") {
+                      for (var i = 0; i < positions.length; i++) {
+                        if (positions[i].ticker == id.toString()) {
+                          positions.removeAt(i);
+                          break;
+                        }
+                      }
+                      positionsMap[id.toString()] = null;
+                    }
                     closeActivity(
-                        "Completed", "Order successfully placed", true);
+                        "Completed", response["meta"]["message"], true);
                   } else {
                     closeActivity(
-                        "Rejected", onValue["meta"]["message"], false);
+                        "Rejected", response["meta"]["message"], false);
                   }
                 } else {
                   closeActivity("Rejected", "Order not placed", false);
                 }
               });
+            } else {
+              closeActivity("Rejected", "Order not placed", false);
             }
           },
           label: new Text(
