@@ -299,6 +299,7 @@ class Position {
   final String id;
   final String userID;
   final String ticker;
+  final String name;
   String invested;
   String shares;
   final String status;
@@ -309,6 +310,7 @@ class Position {
       {this.id,
       this.userID,
       this.ticker,
+      this.name,
       this.invested,
       this.shares,
       this.status,
@@ -320,6 +322,7 @@ class Position {
       id: json['id'],
       userID: json['user_id'],
       ticker: json['ticker'],
+      name: json['name'],
       invested: json['invested'],
       shares: json['shares'],
       status: json['status'],
