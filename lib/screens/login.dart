@@ -57,7 +57,7 @@ class LoginActivityState extends State<LoginActivity> {
                   withLocalStorage: true,
                   initialChild: Container(
                     child: const Center(
-                      child: Text('Waiting.....'),
+                      child: Text('Loading.....'),
                     ),
                   ),
                 )
