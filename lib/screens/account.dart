@@ -86,6 +86,10 @@ class AccountActivityState extends State<AccountActivity>
   getData() {
     List<int> ids = new List();
 
+    if (positions.length == 0) {
+      invested = 0;
+      current = 0;
+    }
     positions.forEach((f) => ids.add(int.parse(f.ticker)));
     Map<String, dynamic> message = {
       "a": "mode",

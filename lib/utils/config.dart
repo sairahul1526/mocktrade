@@ -34,8 +34,8 @@ class API {
 }
 
 class APPVERSION {
-  static const ANDROID = "2.6";
-  static const IOS = "1.1";
+  static const ANDROID = "1.0";
+  static const IOS = "1.0";
 }
 
 class APIKEY {
