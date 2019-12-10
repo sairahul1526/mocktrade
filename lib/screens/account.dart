@@ -34,21 +34,22 @@ class AccountActivityState extends State<AccountActivity>
   }
 
   void _onRefresh() async {
-    amountsapi();
+    accountsapi();
     getData();
   }
 
-  void amountsapi() {
+  void accountsapi() {
     checkInternet().then((internet) {
       if (internet == null || !internet) {
         oneButtonDialog(context, "No Internet connection", "", true);
         _refreshController.refreshCompleted();
       } else {
-        Future<Amounts> data = getAmounts({"user_id": userID});
+        Future<Accounts> data =
+            getAccounts({"user_id": userID, "resp": "amount"});
         data.then((response) {
           _refreshController.refreshCompleted();
-          if (response.amounts != null && response.amounts.length > 0) {
-            amount = double.parse(response.amounts[0].amount);
+          if (response.accounts != null && response.accounts.length > 0) {
+            amount = double.parse(response.accounts[0].amount);
           }
           if (response.meta != null && response.meta.messageType == "1") {
             oneButtonDialog(context, "", response.meta.message,

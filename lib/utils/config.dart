@@ -23,14 +23,13 @@ DateTime close = DateTime.now();
 
 class API {
   static const URL = "mocktrade1.ap-south-1.elasticbeanstalk.com";
-  static const AMOUNT = "amount";
+  static const ACCOUNT = "account";
   static const BUYSELL = "buysell";
   static const LOGIN = "login";
   static const TIMING = "timing";
   static const TOKEN = "token";
   static const ORDER = "order";
   static const POSITIONS = "position";
-  static const WATCHLIST = "watchlist";
 }
 
 class APPVERSION {

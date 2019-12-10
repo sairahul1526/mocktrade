@@ -26,20 +26,20 @@ class Ticker {
   });
 }
 
-// amount
+// account
 
-class Amounts {
-  final List<Amount> amounts;
+class Accounts {
+  final List<Account> accounts;
   final Meta meta;
   final Pagination pagination;
 
-  Amounts({this.amounts, this.meta, this.pagination});
+  Accounts({this.accounts, this.meta, this.pagination});
 
-  factory Amounts.fromJson(Map<String, dynamic> json) {
-    return Amounts(
-      amounts: json['data'] != null
-          ? List<Amount>.from(json['data'].map((i) => Amount.fromJson(i)))
-          : new List<Amount>(),
+  factory Accounts.fromJson(Map<String, dynamic> json) {
+    return Accounts(
+      accounts: json['data'] != null
+          ? List<Account>.from(json['data'].map((i) => Account.fromJson(i)))
+          : new List<Account>(),
       meta: Meta.fromJson(json['meta']),
       pagination: json['pagination'] != null
           ? Pagination.fromJson(json['pagination'])
@@ -48,26 +48,32 @@ class Amounts {
   }
 }
 
-class Amount {
+class Account {
   final String id;
   final String userID;
+  final String name;
+  final String watchlist;
   final String amount;
   final String status;
   final String createdDateTime;
   final String modifiedDateTime;
 
-  Amount(
+  Account(
       {this.id,
       this.userID,
+      this.name,
+      this.watchlist,
       this.amount,
       this.status,
       this.createdDateTime,
       this.modifiedDateTime});
 
-  factory Amount.fromJson(Map<String, dynamic> json) {
-    return Amount(
+  factory Account.fromJson(Map<String, dynamic> json) {
+    return Account(
       id: json['id'],
       userID: json['user_id'],
+      name: json['name'],
+      watchlist: json['watchlist'],
       amount: json['amount'],
       status: json['status'],
       createdDateTime: json['created_date_time'],
@@ -325,56 +331,6 @@ class Position {
       name: json['name'],
       invested: json['invested'],
       shares: json['shares'],
-      status: json['status'],
-      createdDateTime: json['created_date_time'],
-      modifiedDateTime: json['modified_date_time'],
-    );
-  }
-}
-
-// watchlist
-
-class Watchlists {
-  final List<Watchlist> watchlists;
-  final Meta meta;
-  final Pagination pagination;
-
-  Watchlists({this.watchlists, this.meta, this.pagination});
-
-  factory Watchlists.fromJson(Map<String, dynamic> json) {
-    return Watchlists(
-      watchlists: json['data'] != null
-          ? List<Watchlist>.from(json['data'].map((i) => Watchlist.fromJson(i)))
-          : new List<Watchlist>(),
-      meta: Meta.fromJson(json['meta']),
-      pagination: json['pagination'] != null
-          ? Pagination.fromJson(json['pagination'])
-          : null,
-    );
-  }
-}
-
-class Watchlist {
-  final String id;
-  final String userID;
-  final String watchlist;
-  final String status;
-  final String createdDateTime;
-  final String modifiedDateTime;
-
-  Watchlist(
-      {this.id,
-      this.userID,
-      this.watchlist,
-      this.status,
-      this.createdDateTime,
-      this.modifiedDateTime});
-
-  factory Watchlist.fromJson(Map<String, dynamic> json) {
-    return Watchlist(
-      id: json['id'],
-      userID: json['user_id'],
-      watchlist: json['watchlist'],
       status: json['status'],
       createdDateTime: json['created_date_time'],
       modifiedDateTime: json['modified_date_time'],

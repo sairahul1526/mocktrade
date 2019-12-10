@@ -61,7 +61,7 @@ class ReordersActivityState extends State<ReordersActivity>
                           tickers.add(int.parse(watch.instrumentToken));
                         });
                         Future<bool> load = update(
-                          API.WATCHLIST,
+                          API.ACCOUNT,
                           Map.from({
                             "watchlist": tickers.join(","),
                           }),

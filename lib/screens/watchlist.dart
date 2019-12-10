@@ -35,55 +35,40 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
   void initState() {
     super.initState();
 
-    amountsapi();
-    watchlistsapi();
+    accountsapi();
     positionsapi();
   }
 
   void _onRefresh() async {
-    watchlistsapi();
+    accountsapi();
     positionsapi();
   }
 
-  void amountsapi() {
-    checkInternet().then((internet) {
-      if (internet == null || !internet) {
-        oneButtonDialog(context, "No Internet connection", "", true);
-      } else {
-        Future<Amounts> data = getAmounts({"user_id": userID});
-        data.then((response) {
-          if (response.amounts != null && response.amounts.length > 0) {
-            amount = double.parse(response.amounts[0].amount);
-          }
-          if (response.meta != null && response.meta.messageType == "1") {
-            oneButtonDialog(context, "", response.meta.message,
-                !(response.meta.status == STATUS_403));
-          }
-        });
-      }
-    });
-  }
-
-  void watchlistsapi() {
+  void accountsapi() {
     checkInternet().then((internet) {
       if (internet == null || !internet) {
         oneButtonDialog(context, "No Internet connection", "", true);
         _refreshController.refreshCompleted();
       } else {
-        Future<Watchlists> data = getWatchlists({"user_id": userID});
+        Future<Accounts> data = getAccounts({"user_id": userID});
         data.then((response) {
           _refreshController.refreshCompleted();
-          if (response.watchlists != null && response.watchlists.length > 0) {
-            marketwatch.clear();
-            response.watchlists[0].watchlist.split(",").forEach((id) {
-              if (tickerMap[id] != null) {
-                marketwatch.add(tickerMap[id]);
-              }
-            });
-            setState(() {
-              marketwatch = marketwatch;
-            });
-            getData();
+          if (response.accounts != null) {
+            if (response.accounts.length > 0) {
+              amount = double.parse(response.accounts[0].amount);
+              marketwatch.clear();
+              response.accounts[0].watchlist.split(",").forEach((id) {
+                if (tickerMap[id] != null) {
+                  marketwatch.add(tickerMap[id]);
+                }
+              });
+              setState(() {
+                marketwatch = marketwatch;
+              });
+              getData();
+            } else {
+              
+            }
           }
           if (response.meta != null && response.meta.messageType == "1") {
             oneButtonDialog(context, "", response.meta.message,

@@ -5,14 +5,14 @@ import 'package:http/http.dart' as http;
 import './models.dart';
 import './config.dart';
 
-// admin
+// account
 
-Future<Amounts> getAmounts(Map<String, String> query) async {
+Future<Accounts> getAccounts(Map<String, String> query) async {
   final response = await http
-      .get(Uri.http(API.URL, API.AMOUNT, query), headers: headers)
+      .get(Uri.http(API.URL, API.ACCOUNT, query), headers: headers)
       .timeout(Duration(seconds: timeout));
 
-  return Amounts.fromJson(json.decode(response.body));
+  return Accounts.fromJson(json.decode(response.body));
 }
 
 // login
@@ -63,16 +63,6 @@ Future<Positions> getPositions(Map<String, String> query) async {
       .timeout(Duration(seconds: timeout));
 
   return Positions.fromJson(json.decode(response.body));
-}
-
-// watchlist
-
-Future<Watchlists> getWatchlists(Map<String, String> query) async {
-  final response = await http
-      .get(Uri.http(API.URL, API.WATCHLIST, query), headers: headers)
-      .timeout(Duration(seconds: timeout));
-
-  return Watchlists.fromJson(json.decode(response.body));
 }
 
 // add and update
