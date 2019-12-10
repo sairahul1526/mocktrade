@@ -67,7 +67,7 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
               });
               getData();
             } else {
-              
+              takeName();
             }
           }
           if (response.meta != null && response.meta.messageType == "1") {
@@ -77,6 +77,50 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
         });
       }
     });
+  }
+
+  takeName() async {
+    TextEditingController name = new TextEditingController();
+    await showDialog<String>(
+        barrierDismissible: false,
+        context: context,
+        builder: (BuildContext context) {
+          return new _SystemPadding(
+            child: new AlertDialog(
+              contentPadding: const EdgeInsets.all(16.0),
+              content: new Row(
+                children: <Widget>[
+                  new Expanded(
+                    child: new TextField(
+                      controller: name,
+                      autofocus: true,
+                      decoration: new InputDecoration(
+                          labelText: 'Your Name', hintText: 'eg. John Smith'),
+                    ),
+                  )
+                ],
+              ),
+              actions: <Widget>[
+                new FlatButton(
+                    child: const Text('DONE'),
+                    onPressed: () {
+                      if (name.text.length > 0) {
+                        Future<bool> load = add(
+                          API.ACCOUNT,
+                          Map.from({
+                            "user_id": userID,
+                            "name": name.text,
+                          }),
+                        );
+                        load.then((onValue) {
+                          Navigator.of(context).pop();
+                        });
+                      }
+                    })
+              ],
+            ),
+          );
+        });
   }
 
   void positionsapi() {
@@ -353,5 +397,20 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
         ),
       ),
     );
+  }
+}
+
+class _SystemPadding extends StatelessWidget {
+  final Widget child;
+
+  _SystemPadding({Key key, this.child}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    var mediaQuery = MediaQuery.of(context);
+    return new AnimatedContainer(
+        // padding: mediaQuery.viewInsets,
+        duration: const Duration(milliseconds: 300),
+        child: child);
   }
 }
