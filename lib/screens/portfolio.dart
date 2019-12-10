@@ -108,6 +108,7 @@ class PortfolioActivityState extends State<PortfolioActivity>
     if (positions.length == 0) {
       invested = 0;
       current = 0;
+      pandl = 0;
     }
     positions.forEach((f) => ids.add(int.parse(f.ticker)));
     Map<String, dynamic> message = {
