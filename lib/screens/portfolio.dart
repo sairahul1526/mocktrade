@@ -232,6 +232,7 @@ class PortfolioActivityState extends State<PortfolioActivity>
                               height: 7,
                             ),
                             new Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: <Widget>[
                                 new Container(
                                   width: 7,
@@ -246,42 +247,40 @@ class PortfolioActivityState extends State<PortfolioActivity>
                                     ),
                                   ),
                                 ),
-                                new Expanded(
-                                  child: new Row(
-                                    children: <Widget>[
-                                      new Text(
-                                        (pandl > 0 ? "+" : "") +
-                                            pandl.toStringAsFixed(2),
-                                        style: TextStyle(
-                                          color: pandl > 0
-                                              ? Colors.green
-                                              : (pandl < 0
-                                                  ? Colors.red
-                                                  : Colors.black),
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.w400,
-                                        ),
+                               new Row(
+                                  children: <Widget>[
+                                    new Text(
+                                      (pandl > 0 ? "+" : "") +
+                                          pandl.toStringAsFixed(2),
+                                      style: TextStyle(
+                                        color: pandl > 0
+                                            ? Colors.green
+                                            : (pandl < 0
+                                                ? Colors.red
+                                                : Colors.black),
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w400,
                                       ),
-                                      new Text(
-                                        invested != 0
-                                            ? ("  " +
-                                                (pandl > 0 ? "+" : "") +
-                                                (pandl * 100 / invested)
-                                                    .toStringAsFixed(2) +
-                                                "%")
-                                            : "",
-                                        style: TextStyle(
-                                          color: pandl > 0
-                                              ? Colors.green
-                                              : (pandl < 0
-                                                  ? Colors.red
-                                                  : Colors.black),
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.w400,
-                                        ),
-                                      )
-                                    ],
-                                  ),
+                                    ),
+                                    new Text(
+                                      invested != 0
+                                          ? ("  " +
+                                              (pandl > 0 ? "+" : "") +
+                                              (pandl * 100 / invested)
+                                                  .toStringAsFixed(2) +
+                                              " %")
+                                          : "",
+                                      style: TextStyle(
+                                        color: pandl > 0
+                                            ? Colors.green
+                                            : (pandl < 0
+                                                ? Colors.red
+                                                : Colors.black),
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w400,
+                                      ),
+                                    )
+                                  ],
                                 )
                               ],
                             ),
