@@ -64,7 +64,8 @@ class _MyHomePageState extends State<MyHomePage> {
       if (internet == null || !internet) {
         oneButtonDialog(context, "No Internet connection", "", true);
       } else {
-        Future<Timings> data = getTimings({"day": DateTime.now().weekday.toString()});
+        Future<Timings> data =
+            getTimings({"day": DateTime.now().weekday.toString()});
         data.then((response) {
           if (response.timings != null && response.timings.length > 0) {
             holiday = response.timings[0].holiday == "1";
@@ -101,45 +102,67 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void tickers() {
-    getTickers().then((response) {
-      LineSplitter ls = new LineSplitter();
-      List<String> tickerDetails = new List();
-      tickerList.clear();
-      int i = 0;
-      for (var line in ls.convert(response)) {
-        i++;
-        if (i == 1) {
-          continue;
+    Future<bool> prefInit = initSharedPreference();
+    prefInit.then((onValue) {
+      if (onValue) {
+        String response =
+            prefs.getString(DateTime.now().day.toString() + "_tickers");
+        if (response != null && response.length > 0) {
+          parseTickers(response);
+        } else {
+          getTickers().then((response) {
+            prefs.setString(
+                DateTime.now().day.toString() + "_tickers", response);
+            parseTickers(response);
+          });
         }
-        tickerDetails = line.split(",");
-        tickerMap[tickerDetails[0]] = new Ticker(
-            instrumentToken: tickerDetails[0],
-            exchangeToken: tickerDetails[1],
-            tradingSymbol: tickerDetails[2],
-            name: tickerDetails[3],
-            expiry: tickerDetails[5],
-            strike: tickerDetails[6],
-            tickSize: tickerDetails[7],
-            lotSize: tickerDetails[8],
-            instrumentType: tickerDetails[9],
-            segment: tickerDetails[10],
-            exchange: tickerDetails[11]);
-        tickerList.add(new Ticker(
-            instrumentToken: tickerDetails[0],
-            exchangeToken: tickerDetails[1],
-            tradingSymbol: tickerDetails[2],
-            name: tickerDetails[3],
-            expiry: tickerDetails[5],
-            strike: tickerDetails[6],
-            tickSize: tickerDetails[7],
-            lotSize: tickerDetails[8],
-            instrumentType: tickerDetails[9],
-            segment: tickerDetails[10],
-            exchange: tickerDetails[11]));
+      } else {
+        getTickers().then((response) {
+          prefs.setString(DateTime.now().day.toString() + "_tickers", response);
+          parseTickers(response);
+        });
       }
-
-      tokens();
     });
+  }
+
+  void parseTickers(String response) {
+    LineSplitter ls = new LineSplitter();
+    List<String> tickerDetails = new List();
+    tickerList.clear();
+    int i = 0;
+    for (var line in ls.convert(response)) {
+      i++;
+      if (i == 1) {
+        continue;
+      }
+      tickerDetails = line.split(",");
+      tickerMap[tickerDetails[0]] = new Ticker(
+          instrumentToken: tickerDetails[0],
+          exchangeToken: tickerDetails[1],
+          tradingSymbol: tickerDetails[2],
+          name: tickerDetails[3],
+          expiry: tickerDetails[5],
+          strike: tickerDetails[6],
+          tickSize: tickerDetails[7],
+          lotSize: tickerDetails[8],
+          instrumentType: tickerDetails[9],
+          segment: tickerDetails[10],
+          exchange: tickerDetails[11]);
+      tickerList.add(new Ticker(
+          instrumentToken: tickerDetails[0],
+          exchangeToken: tickerDetails[1],
+          tradingSymbol: tickerDetails[2],
+          name: tickerDetails[3],
+          expiry: tickerDetails[5],
+          strike: tickerDetails[6],
+          tickSize: tickerDetails[7],
+          lotSize: tickerDetails[8],
+          instrumentType: tickerDetails[9],
+          segment: tickerDetails[10],
+          exchange: tickerDetails[11]));
+    }
+
+    tokens();
   }
 
   void tokens() {

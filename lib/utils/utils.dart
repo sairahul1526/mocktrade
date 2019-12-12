@@ -29,6 +29,10 @@ int converttoint(Iterable<int> data) {
 }
 
 Future<String> getTickers() async {
+  int today = DateTime.now().day;
+  for (var i = 0; i < today; i++) {
+    prefs.setString(i.toString() + "_tickers", "");
+  }
   final response =
       await http.get("https://api.kite.trade/instruments", headers: {
     "X-Kite-Version": "3",
