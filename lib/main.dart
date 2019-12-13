@@ -166,33 +166,25 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void tokens() {
-    Future<bool> prefInit = initSharedPreference();
-    prefInit.then((onValue) {
-      if (onValue) {
-        if (prefs.getString("accessToken") != null &&
-            prefs.getString("accessToken").length > 0) {
-          accessToken = prefs.getString("accessToken");
-          userID = prefs.getString("userID");
+    if (prefs.getString("accessToken") != null &&
+        prefs.getString("accessToken").length > 0) {
+      accessToken = prefs.getString("accessToken");
+      userID = prefs.getString("userID");
 
-          Future<bool> load = checkAccessToken();
-          load.then((response) {
-            if (response) {
-              Navigator.of(context).pushReplacement(new MaterialPageRoute(
-                  builder: (BuildContext context) => new DashboardActivity()));
-            } else {
-              Navigator.of(context).pushReplacement(new MaterialPageRoute(
-                  builder: (BuildContext context) => new LoginActivity()));
-            }
-          });
+      Future<bool> load = checkAccessToken();
+      load.then((response) {
+        if (response) {
+          Navigator.of(context).pushReplacement(new MaterialPageRoute(
+              builder: (BuildContext context) => new DashboardActivity()));
         } else {
           Navigator.of(context).pushReplacement(new MaterialPageRoute(
               builder: (BuildContext context) => new LoginActivity()));
         }
-      } else {
-        Navigator.of(context).pushReplacement(new MaterialPageRoute(
-            builder: (BuildContext context) => new LoginActivity()));
-      }
-    });
+      });
+    } else {
+      Navigator.of(context).pushReplacement(new MaterialPageRoute(
+          builder: (BuildContext context) => new LoginActivity()));
+    }
   }
 
   @override
