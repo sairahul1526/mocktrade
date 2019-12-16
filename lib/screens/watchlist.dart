@@ -24,6 +24,8 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
   bool get wantKeepAlive => true;
   double width = 0;
 
+  final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
+
   IOWebSocketChannel channel = IOWebSocketChannel.connect(
       "wss://ws.kite.trade?api_key=" + apiKey + "&access_token=" + accessToken);
   Map<int, double> tickers = new Map();
@@ -184,6 +186,12 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
       MaterialPageRoute(builder: (context) => page),
     ) as String;
     print(data);
+    if (data != null && data.length > 0) {
+      _scaffoldKey.currentState.showSnackBar(SnackBar(
+        content: Text(data),
+        duration: Duration(seconds: 3),
+      ));
+    }
     getData();
   }
 
@@ -192,6 +200,7 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
     super.build(context);
     width = MediaQuery.of(context).size.width;
     return new Scaffold(
+      key: _scaffoldKey,
       body: new Container(
         child: new SafeArea(
           child: new Container(
@@ -408,7 +417,6 @@ class _SystemPadding extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return new AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        child: child);
+        duration: const Duration(milliseconds: 300), child: child);
   }
 }

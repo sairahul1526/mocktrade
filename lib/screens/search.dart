@@ -107,6 +107,18 @@ class SearchActivityState extends State<SearchActivity> {
                           setState(() {
                             loading = true;
                           });
+                          bool added = false;
+                          marketwatch.forEach((watch) {
+                            if (int.parse(watch.instrumentToken) ==
+                                int.parse(
+                                    tickerSearchList[i].instrumentToken)) {
+                              added = true;
+                            }
+                          });
+                          if (added) {
+                            Navigator.pop(context, "Already added to marketwatch");
+                            return;
+                          }
                           marketwatch.add(tickerSearchList[i]);
                           List<int> tickers = new List();
                           marketwatch.forEach((watch) {

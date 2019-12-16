@@ -68,7 +68,7 @@ class ReordersActivityState extends State<ReordersActivity>
                           Map.from({'user_id': userID}),
                         );
                         load.then((onValue) {
-                          Navigator.of(context).pop();
+                            Navigator.pop(context, "Marketwatch saved");
                         });
                       },
                       child: new Text("SAVE"),
