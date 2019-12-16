@@ -130,37 +130,107 @@ class _MyHomePageState extends State<MyHomePage> {
     List<String> tickerDetails = new List();
     tickerList.clear();
     int i = 0;
+
+    List<Ticker> nseList = new List();
+    Map<String, Ticker> nseMap = new Map();
+
+    List<Ticker> bseList = new List();
+    Map<String, Ticker> bseMap = new Map();
+
+    List<Ticker> nfoList = new List();
+    Map<String, Ticker> nfoMap = new Map();
+
     for (var line in ls.convert(response)) {
       i++;
       if (i == 1) {
         continue;
       }
       tickerDetails = line.split(",");
-      tickerMap[tickerDetails[0]] = new Ticker(
-          instrumentToken: tickerDetails[0],
-          exchangeToken: tickerDetails[1],
-          tradingSymbol: tickerDetails[2],
-          name: tickerDetails[3],
-          expiry: tickerDetails[5],
-          strike: tickerDetails[6],
-          tickSize: tickerDetails[7],
-          lotSize: tickerDetails[8],
-          instrumentType: tickerDetails[9],
-          segment: tickerDetails[10],
-          exchange: tickerDetails[11]);
-      tickerList.add(new Ticker(
-          instrumentToken: tickerDetails[0],
-          exchangeToken: tickerDetails[1],
-          tradingSymbol: tickerDetails[2],
-          name: tickerDetails[3],
-          expiry: tickerDetails[5],
-          strike: tickerDetails[6],
-          tickSize: tickerDetails[7],
-          lotSize: tickerDetails[8],
-          instrumentType: tickerDetails[9],
-          segment: tickerDetails[10],
-          exchange: tickerDetails[11]));
+      if (tickerDetails[11] == "NSE") {
+        nseMap[tickerDetails[0]] = new Ticker(
+            instrumentToken: tickerDetails[0],
+            exchangeToken: tickerDetails[1],
+            tradingSymbol: tickerDetails[2],
+            name: tickerDetails[3],
+            expiry: tickerDetails[5],
+            strike: tickerDetails[6],
+            tickSize: tickerDetails[7],
+            lotSize: tickerDetails[8],
+            instrumentType: tickerDetails[9],
+            segment: tickerDetails[10],
+            exchange: tickerDetails[11]);
+        nseList.add(new Ticker(
+            instrumentToken: tickerDetails[0],
+            exchangeToken: tickerDetails[1],
+            tradingSymbol: tickerDetails[2],
+            name: tickerDetails[3],
+            expiry: tickerDetails[5],
+            strike: tickerDetails[6],
+            tickSize: tickerDetails[7],
+            lotSize: tickerDetails[8],
+            instrumentType: tickerDetails[9],
+            segment: tickerDetails[10],
+            exchange: tickerDetails[11]));
+      } else if (tickerDetails[11] == "BSE") {
+        bseMap[tickerDetails[0]] = new Ticker(
+            instrumentToken: tickerDetails[0],
+            exchangeToken: tickerDetails[1],
+            tradingSymbol: tickerDetails[2],
+            name: tickerDetails[3],
+            expiry: tickerDetails[5],
+            strike: tickerDetails[6],
+            tickSize: tickerDetails[7],
+            lotSize: tickerDetails[8],
+            instrumentType: tickerDetails[9],
+            segment: tickerDetails[10],
+            exchange: tickerDetails[11]);
+        bseList.add(new Ticker(
+            instrumentToken: tickerDetails[0],
+            exchangeToken: tickerDetails[1],
+            tradingSymbol: tickerDetails[2],
+            name: tickerDetails[3],
+            expiry: tickerDetails[5],
+            strike: tickerDetails[6],
+            tickSize: tickerDetails[7],
+            lotSize: tickerDetails[8],
+            instrumentType: tickerDetails[9],
+            segment: tickerDetails[10],
+            exchange: tickerDetails[11]));
+      } else if (tickerDetails[11] == "NFO") {
+        nfoMap[tickerDetails[0]] = new Ticker(
+            instrumentToken: tickerDetails[0],
+            exchangeToken: tickerDetails[1],
+            tradingSymbol: tickerDetails[2],
+            name: tickerDetails[3],
+            expiry: tickerDetails[5],
+            strike: tickerDetails[6],
+            tickSize: tickerDetails[7],
+            lotSize: tickerDetails[8],
+            instrumentType: tickerDetails[9],
+            segment: tickerDetails[10],
+            exchange: tickerDetails[11]);
+        nfoList.add(new Ticker(
+            instrumentToken: tickerDetails[0],
+            exchangeToken: tickerDetails[1],
+            tradingSymbol: tickerDetails[2],
+            name: tickerDetails[3],
+            expiry: tickerDetails[5],
+            strike: tickerDetails[6],
+            tickSize: tickerDetails[7],
+            lotSize: tickerDetails[8],
+            instrumentType: tickerDetails[9],
+            segment: tickerDetails[10],
+            exchange: tickerDetails[11]));
+      }
     }
+
+    tickerMap.addAll(nseMap);
+    tickerMap.addAll(bseMap);
+    tickerMap.addAll(nfoMap);
+
+    tickerList.addAll(nseList);
+    tickerList.addAll(bseList);
+    tickerList.addAll(nfoList);
 
     tokens();
   }
