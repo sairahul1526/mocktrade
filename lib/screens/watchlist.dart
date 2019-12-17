@@ -29,6 +29,7 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
   IOWebSocketChannel channel = IOWebSocketChannel.connect(
       "wss://ws.kite.trade?api_key=" + apiKey + "&access_token=" + accessToken);
   Map<int, double> tickers = new Map();
+  Map<int, double> closes = new Map();
 
   RefreshController _refreshController =
       RefreshController(initialRefresh: false);
@@ -163,9 +164,21 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
 
     int j = 2;
     for (var i = 0; i < noPackets; i++) {
-      tickers[converttoint(data.getRange(j + 2, j + 2 + 4))] =
-          converttoint(data.getRange(j + 2 + 4, j + 2 + 8)).toDouble() / 100;
-      j = j + 2 + 8;
+      if (converttoint(data.getRange(j, j + 2)) > 40) {
+        tickers[converttoint(data.getRange(j + 2, j + 2 + 4))] =
+            converttoint(data.getRange(j + 2 + 4, j + 2 + 8)).toDouble() / 100;
+        closes[converttoint(data.getRange(j + 2, j + 2 + 4))] =
+            converttoint(data.getRange(j + 2 + 40, j + 2 + 44)).toDouble() /
+                100;
+        j = j + 2 + 44;
+      } else {
+        tickers[converttoint(data.getRange(j + 2, j + 2 + 4))] =
+            converttoint(data.getRange(j + 2 + 4, j + 2 + 8)).toDouble() / 100;
+        closes[converttoint(data.getRange(j + 2, j + 2 + 4))] =
+            converttoint(data.getRange(j + 2 + 20, j + 2 + 24)).toDouble() /
+                100;
+        j = j + 2 + 24;
+      }
     }
   }
 
@@ -175,7 +188,7 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
     marketwatch.forEach((f) => ids.add(int.parse(f.instrumentToken)));
     Map<String, dynamic> message = {
       "a": "mode",
-      "v": ["ltp", ids]
+      "v": ["quote", ids]
     };
     channel.sink.add(jsonEncode(message));
   }
@@ -185,7 +198,6 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
       context,
       MaterialPageRoute(builder: (context) => page),
     ) as String;
-    print(data);
     if (data != null && data.length > 0) {
       _scaffoldKey.currentState.showSnackBar(SnackBar(
         content: Text(data),
@@ -332,15 +344,43 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
                                                         fontSize: 15,
                                                       ),
                                                     ),
-                                                    new Text(tickers[int.parse(
-                                                                marketwatch[i]
-                                                                    .instrumentToken)] !=
-                                                            null
-                                                        ? tickers[int.parse(
-                                                                marketwatch[i]
-                                                                    .instrumentToken)]
-                                                            .toStringAsFixed(2)
-                                                        : ""),
+                                                    new Text(
+                                                      tickers[int.parse(marketwatch[
+                                                                          i]
+                                                                      .instrumentToken)] ==
+                                                                  null ||
+                                                              closes[int.parse(
+                                                                      marketwatch[
+                                                                              i]
+                                                                          .instrumentToken)] ==
+                                                                  null
+                                                          ? ""
+                                                          : tickers[int.parse(
+                                                                  marketwatch[i]
+                                                                      .instrumentToken)]
+                                                              .toStringAsFixed(
+                                                                  2),
+                                                      style: TextStyle(
+                                                        color: tickers[int.parse(
+                                                                    marketwatch[
+                                                                            i]
+                                                                        .instrumentToken)] ==
+                                                                null ||
+                                                              closes[int.parse(
+                                                                      marketwatch[
+                                                                              i]
+                                                                          .instrumentToken)] ==
+                                                                  null
+                                                            ? Colors.black
+                                                            : tickers[int.parse(marketwatch[i]
+                                                                            .instrumentToken)] -
+                                                                        closes[int.parse(
+                                                                            marketwatch[i].instrumentToken)] >
+                                                                    0
+                                                                ? Colors.green
+                                                                : Colors.red,
+                                                      ),
+                                                    ),
                                                   ],
                                                 ),
                                                 new Container(
@@ -348,46 +388,88 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
                                                 ),
                                                 new Row(
                                                   mainAxisAlignment:
-                                                      MainAxisAlignment.start,
+                                                      MainAxisAlignment
+                                                          .spaceBetween,
                                                   children: <Widget>[
-                                                    new Text(
-                                                      marketwatch[i].segment,
-                                                      style: TextStyle(
-                                                        color: Colors.grey,
-                                                        fontSize: 12,
-                                                      ),
-                                                    ),
-                                                    new Container(
-                                                      width: 10,
-                                                    ),
-                                                    positionsMap[marketwatch[i]
-                                                                .instrumentToken] !=
-                                                            null
-                                                        ? new Icon(
-                                                            Icons.card_travel,
+                                                    new Row(
+                                                      children: <Widget>[
+                                                        new Text(
+                                                          marketwatch[i]
+                                                              .segment,
+                                                          style: TextStyle(
                                                             color: Colors.grey,
-                                                            size: 15,
-                                                          )
-                                                        : new Container(),
-                                                    new Container(
-                                                      width: 10,
-                                                    ),
-                                                    positionsMap[marketwatch[i]
-                                                                .instrumentToken] !=
-                                                            null
-                                                        ? new Text(
-                                                            positionsMap[
-                                                                    marketwatch[
+                                                            fontSize: 12,
+                                                          ),
+                                                        ),
+                                                        new Container(
+                                                          width: 10,
+                                                        ),
+                                                        positionsMap[marketwatch[
+                                                                        i]
+                                                                    .instrumentToken] !=
+                                                                null
+                                                            ? new Icon(
+                                                                Icons
+                                                                    .card_travel,
+                                                                color:
+                                                                    Colors.grey,
+                                                                size: 15,
+                                                              )
+                                                            : new Container(),
+                                                        new Container(
+                                                          width: 10,
+                                                        ),
+                                                        positionsMap[marketwatch[
+                                                                        i]
+                                                                    .instrumentToken] !=
+                                                                null
+                                                            ? new Text(
+                                                                positionsMap[marketwatch[
                                                                             i]
                                                                         .instrumentToken]
-                                                                .shares
-                                                                .toString(),
-                                                            style: TextStyle(
-                                                              color:
-                                                                  Colors.grey,
-                                                              fontSize: 12,
-                                                            ))
-                                                        : new Container()
+                                                                    .shares
+                                                                    .toString(),
+                                                                style:
+                                                                    TextStyle(
+                                                                  color: Colors
+                                                                      .grey,
+                                                                  fontSize: 12,
+                                                                ))
+                                                            : new Container()
+                                                      ],
+                                                    ),
+                                                    new Row(
+                                                      children: <Widget>[
+                                                        new Text(
+                                                          tickers[int.parse(
+                                                                      marketwatch[
+                                                                              i]
+                                                                          .instrumentToken)] ==
+                                                                  null ||
+                                                              closes[int.parse(
+                                                                      marketwatch[
+                                                                              i]
+                                                                          .instrumentToken)] ==
+                                                                  null
+                                                              ? ""
+                                                              : (tickers[int.parse(marketwatch[i].instrumentToken)] -
+                                                                          closes[int.parse(marketwatch[i]
+                                                                              .instrumentToken)])
+                                                                      .toStringAsFixed(
+                                                                          2) +
+                                                                  " (" +
+                                                                  ((tickers[int.parse(marketwatch[i].instrumentToken)] -
+                                                                              closes[int.parse(marketwatch[i].instrumentToken)]) * 100 /
+                                                                          closes[int.parse(marketwatch[i].instrumentToken)])
+                                                                      .toStringAsFixed(2) +
+                                                                  "%)",
+                                                          style: TextStyle(
+                                                            color: Colors.black,
+                                                            fontSize: 12,
+                                                          ),
+                                                        )
+                                                      ],
+                                                    )
                                                   ],
                                                 )
                                               ],
