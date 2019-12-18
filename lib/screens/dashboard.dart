@@ -147,11 +147,11 @@ class DashboardActivityState extends State<DashboardActivity>
                       mainAxisSize: MainAxisSize.min,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
-                        Icon(Icons.person_outline,
+                        Icon(Icons.settings,
                             color:
                                 selectedTab == 3 ? Colors.blue : Colors.black),
                         Text(
-                          "Account",
+                          "Settings",
                           style: TextStyle(
                               color: selectedTab == 3
                                   ? Colors.blue

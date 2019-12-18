@@ -79,6 +79,7 @@ class OrdersActivityState extends State<OrdersActivity>
           "orderby": "created_date_time",
           "sortby": "desc",
           "status": "1",
+          "today": "true",
         });
         data.then((response) {
           _refreshController.refreshCompleted();

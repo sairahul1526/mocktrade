@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:intl/intl.dart';
-
+import 'package:url_launcher/url_launcher.dart';
 import 'dart:io';
 import 'package:hex/hex.dart';
 import 'package:convert_hex/convert_hex.dart';
@@ -22,6 +22,12 @@ class HexColor extends Color {
   }
 
   HexColor(final String hexColor) : super(_getColorFromHex(hexColor));
+}
+
+void launchURL(String url) async {
+  if (await canLaunch(url)) {
+    await launch(url);
+  }
 }
 
 int converttoint(Iterable<int> data) {

@@ -58,6 +58,7 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
           _refreshController.refreshCompleted();
           if (response.accounts != null) {
             if (response.accounts.length > 0) {
+              prefs.setString("name", response.accounts[0].name);
               amount = double.parse(response.accounts[0].amount);
               marketwatch.clear();
               response.accounts[0].watchlist.split(",").forEach((id) {
@@ -116,6 +117,7 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
                           }),
                         );
                         load.then((onValue) {
+                          prefs.setString("name", name.text);
                           Navigator.of(context).pop();
                         });
                       }

@@ -32,6 +32,8 @@ class API {
   static const POSITIONS = "position";
 }
 
+String supportEmail = "dravid.rahul1526@gmail.com";
+
 class APPVERSION {
   static const ANDROID = "1.0";
   static const IOS = "1.0";
