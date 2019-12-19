@@ -155,6 +155,7 @@ class BuySellActivityState extends State<BuySellActivity> {
                 "price": price.toStringAsFixed(2),
                 "invested": invested.toStringAsFixed(2),
                 "type": sell ? "0" : "1",
+                "expiry": tickerMap[id].expiry,
               });
               load.then((response) {
                 if (response != null) {
@@ -216,6 +217,7 @@ class BuySellActivityState extends State<BuySellActivity> {
                                     .toString(),
                             shares: int.parse(shares.text).toString(),
                             status: "1",
+                            expiry: tickerMap[id].expiry,
                           ));
                       positionsMap[id.toString()] = new Position(
                         userID: userID,
@@ -225,6 +227,7 @@ class BuySellActivityState extends State<BuySellActivity> {
                             .toString(),
                         shares: int.parse(shares.text).toString(),
                         status: "1",
+                            expiry: tickerMap[id].expiry,
                       );
                     }
                     if (positionsMap[id.toString()].shares == "0") {

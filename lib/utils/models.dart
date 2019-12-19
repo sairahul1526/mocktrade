@@ -309,6 +309,7 @@ class Position {
   String invested;
   String shares;
   final String status;
+  final String expiry;
   final String createdDateTime;
   final String modifiedDateTime;
 
@@ -320,6 +321,7 @@ class Position {
       this.invested,
       this.shares,
       this.status,
+      this.expiry,
       this.createdDateTime,
       this.modifiedDateTime});
 
@@ -331,6 +333,7 @@ class Position {
       name: json['name'],
       invested: json['invested'],
       shares: json['shares'],
+      expiry: json['expiry'],
       status: json['status'],
       createdDateTime: json['created_date_time'],
       modifiedDateTime: json['modified_date_time'],
