@@ -60,6 +60,7 @@ class BuySellActivityState extends State<BuySellActivity> {
   void initState() {
     super.initState();
 
+    accountsapi();
     shares.text = tickerMap[id].lotSize;
     Map<String, dynamic> message = {
       "a": "mode",
@@ -69,6 +70,27 @@ class BuySellActivityState extends State<BuySellActivity> {
       ]
     };
     channel.sink.add(jsonEncode(message));
+  }
+
+  void accountsapi() {
+    checkInternet().then((internet) {
+      if (internet == null || !internet) {
+        oneButtonDialog(context, "No Internet connection", "", true);
+      } else {
+        Future<Accounts> data = getAccounts({"user_id": userID});
+        data.then((response) {
+          if (response.accounts != null) {
+            if (response.accounts.length > 0) {
+              amount = double.parse(response.accounts[0].amount);
+            }
+          }
+          if (response.meta != null && response.meta.messageType == "1") {
+            oneButtonDialog(context, "", response.meta.message,
+                !(response.meta.status == STATUS_403));
+          }
+        });
+      }
+    });
   }
 
   void splitdata(List<int> data) {
