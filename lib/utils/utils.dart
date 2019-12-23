@@ -114,8 +114,7 @@ Future<bool> checkAccessToken() async {
   return response.statusCode == 200;
 }
 
-Future<dynamic> fillDataAPI(List<String> ticks) async {
-  String url = "https://api.kite.trade/quote/ohlc?";
+Future<dynamic> fillDataAPI(String url, List<String> ticks) async {
   bool init = true;
   for (var tick in ticks) {
     if (!init) {

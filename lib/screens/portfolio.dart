@@ -146,8 +146,13 @@ class PortfolioActivityState extends State<PortfolioActivity>
   fillData() {
     List<String> ids = new List();
 
-    marketwatch.forEach((f) => ids.add(f.instrumentToken));
-    fillDataAPI(ids).then((resp) {
+    if (positions.length == 0) {
+      invested = 0;
+      current = 0;
+      pandl = 0;
+    }
+    positions.forEach((f) => ids.add(f.ticker));
+    fillDataAPI("https://api.kite.trade/quote/ohlc?", ids).then((resp) {
       for (var id in ids) {
         if (resp["data"][id] != null) {
           tickers[int.parse(id)] = resp["data"][id]["last_price"].toDouble();

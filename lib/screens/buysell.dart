@@ -61,15 +61,33 @@ class BuySellActivityState extends State<BuySellActivity> {
     super.initState();
 
     accountsapi();
-    shares.text = tickerMap[id].lotSize;
-    Map<String, dynamic> message = {
-      "a": "mode",
-      "v": [
-        "quote",
-        [int.parse(id)]
-      ]
-    };
-    channel.sink.add(jsonEncode(message));
+
+    List<String> ids = new List();
+
+    marketwatch.forEach((f) => ids.add(f.instrumentToken));
+    fillDataAPI("https://api.kite.trade/quote?", [id]).then((resp) {
+      if (resp["data"][id] != null) {
+        lastTradedPrice = resp["data"][id]["last_price"].toDouble();
+        lastTradedQuantity = resp["data"][id]["last_quantity"].toDouble();
+        averageTradedPrice = resp["data"][id]["average_price"].toDouble();
+        volumeTraded = resp["data"][id]["volume"].toDouble();
+        totalBuyQuantity = resp["data"][id]["buy_quantity"].toDouble();
+        totalSellQuantity = resp["data"][id]["sell_quantity"].toDouble();
+        openPrice = resp["data"][id]["ohlc"]["open"].toDouble();
+        highPrice = resp["data"][id]["ohlc"]["high"].toDouble();
+        lowPrice = resp["data"][id]["ohlc"]["low"].toDouble();
+        closePrice = resp["data"][id]["ohlc"]["close"].toDouble();
+      }
+      shares.text = tickerMap[id].lotSize;
+      Map<String, dynamic> message = {
+        "a": "mode",
+        "v": [
+          "quote",
+          [int.parse(id)]
+        ]
+      };
+      channel.sink.add(jsonEncode(message));
+    });
   }
 
   void accountsapi() {
@@ -227,7 +245,7 @@ class BuySellActivityState extends State<BuySellActivity> {
                             .toString(),
                         shares: int.parse(shares.text).toString(),
                         status: "1",
-                            expiry: tickerMap[id].expiry,
+                        expiry: tickerMap[id].expiry,
                       );
                     }
                     if (positionsMap[id.toString()].shares == "0") {

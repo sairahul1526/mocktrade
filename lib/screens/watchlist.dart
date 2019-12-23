@@ -199,7 +199,7 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
     List<String> ids = new List();
 
     marketwatch.forEach((f) => ids.add(f.instrumentToken));
-    fillDataAPI(ids).then((resp) {
+    fillDataAPI("https://api.kite.trade/quote/ohlc?", ids).then((resp) {
       for (var id in ids) {
         if (resp["data"][id] != null) {
           tickers[int.parse(id)] = resp["data"][id]["last_price"].toDouble();

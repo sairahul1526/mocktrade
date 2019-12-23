@@ -40,7 +40,7 @@ class ProfileActivityState extends State<ProfileActivity>
     _controller.addListener(_scrollListener);
     orders.clear();
     ordersapi();
-    getData();
+    fillData();
   }
 
   void splitdata(List<int> data) {
@@ -55,7 +55,10 @@ class ProfileActivityState extends State<ProfileActivity>
           converttoint(data.getRange(j + 2 + 4, j + 2 + 8)).toDouble() / 100;
       j = j + 2 + 8;
     }
+    calculate();
+  }
 
+  calculate() {
     invested = 0;
     current = 0;
     for (var position in positions) {
@@ -65,6 +68,25 @@ class ProfileActivityState extends State<ProfileActivity>
             tickers[int.parse(position.ticker)] * double.parse(position.shares);
       }
     }
+  }
+
+  fillData() {
+    List<String> ids = new List();
+
+    if (positions.length == 0) {
+      invested = 0;
+      current = 0;
+    }
+    positions.forEach((f) => ids.add(f.ticker));
+    fillDataAPI("https://api.kite.trade/quote/ltp?", ids).then((resp) {
+      for (var id in ids) {
+        if (resp["data"][id] != null) {
+          tickers[int.parse(id)] = resp["data"][id]["last_price"].toDouble();
+        }
+      }
+      calculate();
+      getData();
+    });
   }
 
   getData() {
