@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:io';
+import 'dart:convert';
 import 'package:hex/hex.dart';
 import 'package:convert_hex/convert_hex.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -111,4 +112,23 @@ Future<bool> checkAccessToken() async {
   });
 
   return response.statusCode == 200;
+}
+
+Future<dynamic> fillDataAPI(List<String> ticks) async {
+  String url = "https://api.kite.trade/quote/ohlc?";
+  bool init = true;
+  for (var tick in ticks) {
+    if (!init) {
+      url += "&";
+    }
+    url += "i="+tick;
+    init = false;
+  }
+  final response =
+      await http.get(url, headers: {
+    "X-Kite-Version": "3",
+    "Authorization": "token " + apiKey + ":" + accessToken + ""
+  });
+
+  return json.decode(response.body);
 }

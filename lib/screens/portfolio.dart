@@ -35,7 +35,7 @@ class PortfolioActivityState extends State<PortfolioActivity>
   void initState() {
     super.initState();
 
-    getData();
+    fillData();
     accountsapi();
   }
 
@@ -84,7 +84,7 @@ class PortfolioActivityState extends State<PortfolioActivity>
               positionsMap = positionsMap;
               positions = positions;
             });
-            getData();
+            fillData();
           }
           if (response.meta != null && response.meta.messageType == "1") {
             oneButtonDialog(context, "", response.meta.message,
@@ -141,6 +141,20 @@ class PortfolioActivityState extends State<PortfolioActivity>
     };
     channel.sink.add(jsonEncode(message));
     _refreshController.refreshCompleted();
+  }
+
+  fillData() {
+    List<String> ids = new List();
+
+    marketwatch.forEach((f) => ids.add(f.instrumentToken));
+    fillDataAPI(ids).then((resp) {
+      for (var id in ids) {
+        if (resp["data"][id] != null) {
+          tickers[int.parse(id)] = resp["data"][id]["last_price"].toDouble();
+        }
+      }
+      getData();
+    });
   }
 
   @override

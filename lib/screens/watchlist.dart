@@ -69,7 +69,7 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
               setState(() {
                 marketwatch = marketwatch;
               });
-              getData();
+              fillData();
             } else {
               takeName();
             }
@@ -195,6 +195,21 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
     channel.sink.add(jsonEncode(message));
   }
 
+  fillData() {
+    List<String> ids = new List();
+
+    marketwatch.forEach((f) => ids.add(f.instrumentToken));
+    fillDataAPI(ids).then((resp) {
+      for (var id in ids) {
+        if (resp["data"][id] != null) {
+          tickers[int.parse(id)] = resp["data"][id]["last_price"].toDouble();
+          closes[int.parse(id)] = resp["data"][id]["ohlc"]["close"].toDouble();
+        }
+      }
+      getData();
+    });
+  }
+
   searchPage(BuildContext context, Widget page) async {
     final data = await Navigator.push(
       context,
@@ -206,7 +221,7 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
         duration: Duration(seconds: 3),
       ));
     }
-    getData();
+    fillData();
   }
 
   @override
@@ -364,18 +379,15 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
                                                                   2),
                                                       style: TextStyle(
                                                         color: tickers[int.parse(
-                                                                    marketwatch[
-                                                                            i]
-                                                                        .instrumentToken)] ==
-                                                                null ||
-                                                              closes[int.parse(
-                                                                      marketwatch[
-                                                                              i]
-                                                                          .instrumentToken)] ==
-                                                                  null
+                                                                        marketwatch[i]
+                                                                            .instrumentToken)] ==
+                                                                    null ||
+                                                                closes[int.parse(
+                                                                        marketwatch[i]
+                                                                            .instrumentToken)] ==
+                                                                    null
                                                             ? Colors.black
-                                                            : tickers[int.parse(marketwatch[i]
-                                                                            .instrumentToken)] -
+                                                            : tickers[int.parse(marketwatch[i].instrumentToken)] -
                                                                         closes[int.parse(
                                                                             marketwatch[i].instrumentToken)] >
                                                                     0
@@ -443,16 +455,11 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
                                                     new Row(
                                                       children: <Widget>[
                                                         new Text(
-                                                          tickers[int.parse(
-                                                                      marketwatch[
-                                                                              i]
+                                                          tickers[int.parse(marketwatch[i].instrumentToken)] ==
+                                                                      null ||
+                                                                  closes[int.parse(marketwatch[i]
                                                                           .instrumentToken)] ==
-                                                                  null ||
-                                                              closes[int.parse(
-                                                                      marketwatch[
-                                                                              i]
-                                                                          .instrumentToken)] ==
-                                                                  null
+                                                                      null
                                                               ? ""
                                                               : (tickers[int.parse(marketwatch[i].instrumentToken)] -
                                                                           closes[int.parse(marketwatch[i]
@@ -460,8 +467,8 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
                                                                       .toStringAsFixed(
                                                                           2) +
                                                                   " (" +
-                                                                  ((tickers[int.parse(marketwatch[i].instrumentToken)] -
-                                                                              closes[int.parse(marketwatch[i].instrumentToken)]) * 100 /
+                                                                  ((tickers[int.parse(marketwatch[i].instrumentToken)] - closes[int.parse(marketwatch[i].instrumentToken)]) *
+                                                                          100 /
                                                                           closes[int.parse(marketwatch[i].instrumentToken)])
                                                                       .toStringAsFixed(2) +
                                                                   "%)",
