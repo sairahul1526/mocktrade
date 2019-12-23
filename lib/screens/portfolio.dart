@@ -350,14 +350,16 @@ class PortfolioActivityState extends State<PortfolioActivity>
                         itemBuilder: (itemContext, i) {
                           return new GestureDetector(
                             onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) => new BuySellActivity(
-                                       positions[i].ticker,
-                                        positions[i].name,
-                                        true)),
-                              );
+                              if (tickerMap[positions[i].ticker] != null) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) => new BuySellActivity(
+                                        positions[i].ticker,
+                                          positions[i].name,
+                                          true)),
+                                );
+                              }
                             },
                             child: tickers[
                                         int.parse(positions[i].ticker)] !=
