@@ -37,6 +37,8 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  bool loaded = false;
+
   @override
   void initState() {
     super.initState();
@@ -243,17 +245,18 @@ class _MyHomePageState extends State<MyHomePage> {
 
       Future<bool> load = checkAccessToken();
       load.then((response) {
+        setState(() {
+          loaded = true;
+        });
         if (response) {
           Navigator.of(context).pushReplacement(new MaterialPageRoute(
               builder: (BuildContext context) => new DashboardActivity()));
-        } else {
-          Navigator.of(context).pushReplacement(new MaterialPageRoute(
-              builder: (BuildContext context) => new LoginActivity()));
         }
       });
     } else {
-      Navigator.of(context).pushReplacement(new MaterialPageRoute(
-          builder: (BuildContext context) => new LoginActivity()));
+      setState(() {
+        loaded = true;
+      });
     }
   }
 
@@ -266,11 +269,92 @@ class _MyHomePageState extends State<MyHomePage> {
           child: new ListView(
             shrinkWrap: true,
             children: <Widget>[
+              new Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  new Text(
+                    "Welcome to",
+                    style: TextStyle(
+                      fontSize: 17,
+                      color: Colors.black,
+                      fontWeight: FontWeight.w400,
+                      decoration: TextDecoration.none,
+                    ),
+                  ),
+                ],
+              ),
+              new Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  new Text(
+                    "MOCK TRADE",
+                    style: TextStyle(
+                      fontSize: 30,
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold,
+                      decoration: TextDecoration.none,
+                    ),
+                  ),
+                ],
+              ),
               new SizedBox(
                 width: 200,
                 height: 200,
                 child: new Image.asset('assets/bull.jpg'),
               ),
+              loaded
+                  ? new Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        new Text(
+                          "Login with",
+                          style: TextStyle(
+                            fontSize: 17,
+                            color: Colors.black,
+                            fontWeight: FontWeight.w400,
+                            decoration: TextDecoration.none,
+                          ),
+                        ),
+                      ],
+                    )
+                  : new Container(),
+              new Container(
+                height: 10,
+              ),
+              loaded
+                  ? new FlatButton(
+                      onPressed: () {
+                        Navigator.of(context).pushReplacement(
+                            new MaterialPageRoute(
+                                builder: (BuildContext context) =>
+                                    new LoginActivity()));
+                      },
+                      child: new Container(
+                        margin: const EdgeInsets.all(15.0),
+                        padding: const EdgeInsets.all(3.0),
+                        child: new Row(
+                          mainAxisSize: MainAxisSize.max,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: <Widget>[
+                            new SizedBox(
+                              width: 50,
+                              height: 50,
+                              child: new Image.asset('assets/kite.jpg'),
+                            ),
+                            new Text(
+                              "Zerodha",
+                              style: TextStyle(
+                                fontSize: 17,
+                                color: Colors.black,
+                                fontWeight: FontWeight.w400,
+                                decoration: TextDecoration.none,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  : new Container(),
             ],
           ),
         ),
