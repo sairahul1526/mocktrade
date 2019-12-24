@@ -278,7 +278,7 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
                           ),
                         ),
                         new Text(
-                          tickers.length.toString() + "/100",
+                          marketwatch.length.toString() + "/100",
                           style: TextStyle(
                             color: Colors.grey,
                           ),
