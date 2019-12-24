@@ -40,7 +40,31 @@ class ProfileActivityState extends State<ProfileActivity>
     _controller.addListener(_scrollListener);
     orders.clear();
     ordersapi();
-    fillData();
+    accountsapi();
+  }
+
+  void accountsapi() {
+    checkInternet().then((internet) {
+      if (internet == null || !internet) {
+        oneButtonDialog(context, "No Internet connection", "", true);
+      } else {
+        Future<Accounts> data = getAccounts({"user_id": userID});
+        data.then((response) {
+          if (response.accounts != null) {
+            if (response.accounts.length > 0) {
+              setState(() {
+                amount = double.parse(response.accounts[0].amount);
+              });
+            }
+          }
+          if (response.meta != null && response.meta.messageType == "1") {
+            oneButtonDialog(context, "", response.meta.message,
+                !(response.meta.status == STATUS_403));
+          }
+          fillData();
+        });
+      }
+    });
   }
 
   void splitdata(List<int> data) {
