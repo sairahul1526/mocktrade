@@ -39,18 +39,21 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
     super.initState();
 
     accountsapi();
-    positionsapi();
   }
 
   void _onRefresh() async {
     accountsapi();
-    positionsapi();
   }
 
   void accountsapi() {
     checkInternet().then((internet) {
       if (internet == null || !internet) {
-        oneButtonDialog(context, "No Internet connection", "", true);
+        Future<bool> dialog = retryDialog(context, "No Internet connection", "");
+        dialog.then((onValue) {
+          if (onValue) {
+            accountsapi();
+          }
+        });
         _refreshController.refreshCompleted();
       } else {
         Future<Accounts> data = getAccounts({"user_id": userID});
@@ -69,7 +72,7 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
               setState(() {
                 marketwatch = marketwatch;
               });
-              fillData();
+              positionsapi();
             } else {
               takeName();
             }
@@ -109,16 +112,28 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
                     child: const Text('DONE'),
                     onPressed: () {
                       if (name.text.length > 0) {
-                        Future<bool> load = add(
-                          API.ACCOUNT,
-                          Map.from({
-                            "user_id": userID,
-                            "name": name.text,
-                          }),
-                        );
-                        load.then((onValue) {
-                          prefs.setString("name", name.text);
-                          Navigator.of(context).pop();
+                         checkInternet().then((internet) {
+                          if (internet == null || !internet) {
+                            Future<bool> dialog = retryDialog(
+                                context, "No Internet connection", "");
+                            dialog.then((onValue) {
+                              if (onValue) {
+                                takeName();
+                              }
+                            });
+                          } else {
+                            Future<bool> load = add(
+                              API.ACCOUNT,
+                              Map.from({
+                                "user_id": userID,
+                                "name": name.text,
+                              }),
+                            );
+                            load.then((onValue) {
+                              prefs.setString("name", name.text);
+                              Navigator.of(context).pop();
+                            });
+                          }
                         });
                       }
                     })
@@ -131,7 +146,13 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
   void positionsapi() {
     checkInternet().then((internet) {
       if (internet == null || !internet) {
-        oneButtonDialog(context, "No Internet connection", "", true);
+         Future<bool> dialog = retryDialog(
+              context, "No Internet connection", "");
+          dialog.then((onValue) {
+            if (onValue) {
+              takeName();
+            }
+          });
       } else {
         Future<Positions> data = getPositions({"user_id": userID});
         data.then((response) {
@@ -148,6 +169,7 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
               positionsMap = positionsMap;
               positions = positions;
             });
+            fillData();
           }
           if (response.meta != null && response.meta.messageType == "1") {
             oneButtonDialog(context, "", response.meta.message,

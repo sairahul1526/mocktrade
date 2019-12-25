@@ -64,7 +64,13 @@ class _MyHomePageState extends State<MyHomePage> {
   void timingsapi() {
     checkInternet().then((internet) {
       if (internet == null || !internet) {
-        oneButtonDialog(context, "No Internet connection", "", true);
+        Future<bool> dialog =
+            retryDialog(context, "No Internet connection", "");
+        dialog.then((onValue) {
+          if (onValue) {
+            timingsapi();
+          }
+        });
       } else {
         Future<Timings> data =
             getTimings({"day": DateTime.now().weekday.toString()});
@@ -112,16 +118,41 @@ class _MyHomePageState extends State<MyHomePage> {
         if (response != null && response.length > 0) {
           parseTickers(response);
         } else {
-          getTickers().then((response) {
-            prefs.setString(
-                DateTime.now().day.toString() + "_tickers", response);
-            parseTickers(response);
+          checkInternet().then((internet) {
+            if (internet == null || !internet) {
+              Future<bool> dialog =
+                  retryDialog(context, "No Internet connection", "");
+              dialog.then((onValue) {
+                if (onValue) {
+                  tickers();
+                }
+              });
+            } else {
+              getTickers().then((response) {
+                prefs.setString(
+                    DateTime.now().day.toString() + "_tickers", response);
+                parseTickers(response);
+              });
+            }
           });
         }
       } else {
-        getTickers().then((response) {
-          prefs.setString(DateTime.now().day.toString() + "_tickers", response);
-          parseTickers(response);
+        checkInternet().then((internet) {
+          if (internet == null || !internet) {
+            Future<bool> dialog =
+                retryDialog(context, "No Internet connection", "");
+            dialog.then((onValue) {
+              if (onValue) {
+                tickers();
+              }
+            });
+          } else {
+            getTickers().then((response) {
+              prefs.setString(
+                  DateTime.now().day.toString() + "_tickers", response);
+              parseTickers(response);
+            });
+          }
         });
       }
     });
@@ -243,14 +274,26 @@ class _MyHomePageState extends State<MyHomePage> {
       accessToken = prefs.getString("accessToken");
       userID = prefs.getString("userID");
 
-      Future<bool> load = checkAccessToken();
-      load.then((response) {
-        setState(() {
-          loaded = true;
-        });
-        if (response) {
-          Navigator.of(context).pushReplacement(new MaterialPageRoute(
-              builder: (BuildContext context) => new DashboardActivity()));
+      checkInternet().then((internet) {
+        if (internet == null || !internet) {
+          Future<bool> dialog =
+              retryDialog(context, "No Internet connection", "");
+          dialog.then((onValue) {
+            if (onValue) {
+              tokens();
+            }
+          });
+        } else {
+          Future<bool> load = checkAccessToken();
+          load.then((response) {
+            setState(() {
+              loaded = true;
+            });
+            if (response) {
+              Navigator.of(context).pushReplacement(new MaterialPageRoute(
+                  builder: (BuildContext context) => new DashboardActivity()));
+            }
+          });
         }
       });
     } else {

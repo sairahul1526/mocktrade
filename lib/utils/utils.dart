@@ -104,6 +104,32 @@ void oneButtonDialog(
   );
 }
 
+Future<bool> retryDialog(
+    BuildContext context, String title, String content) async {
+  bool returned = false;
+  await showDialog(
+    context: context,
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: new Text(title),
+        content: new Text(content),
+        actions: <Widget>[
+          new FlatButton(
+            child: new Text(
+              "Retry",
+            ),
+            onPressed: () {
+              Navigator.of(context).pop();
+              returned = true;
+            },
+          ),
+        ],
+      );
+    },
+  );
+  return returned;
+}
+
 Future<bool> checkAccessToken() async {
   final response =
       await http.get("https://api.kite.trade/quote/ltp?i=NSE:INFY", headers: {

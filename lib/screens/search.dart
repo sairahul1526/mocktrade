@@ -116,7 +116,8 @@ class SearchActivityState extends State<SearchActivity> {
                             }
                           });
                           if (added) {
-                            Navigator.pop(context, "Already added to marketwatch");
+                            Navigator.pop(
+                                context, "Already added to marketwatch");
                             return;
                           }
                           marketwatch.add(tickerSearchList[i]);
@@ -124,15 +125,25 @@ class SearchActivityState extends State<SearchActivity> {
                           marketwatch.forEach((watch) {
                             tickers.add(int.parse(watch.instrumentToken));
                           });
-                          Future<bool> load = update(
-                            API.ACCOUNT,
-                            Map.from({
-                              "watchlist": tickers.join(","),
-                            }),
-                            Map.from({'user_id': userID}),
-                          );
-                          load.then((onValue) {
-                            Navigator.of(context).pop();
+                          checkInternet().then((internet) {
+                            if (internet == null || !internet) {
+                              Future<bool> dialog = retryDialog(
+                                  context, "No Internet connection", "");
+                              dialog.then((onValue) {
+                                if (onValue) {}
+                              });
+                            } else {
+                              Future<bool> load = update(
+                                API.ACCOUNT,
+                                Map.from({
+                                  "watchlist": tickers.join(","),
+                                }),
+                                Map.from({'user_id': userID}),
+                              );
+                              load.then((onValue) {
+                                Navigator.of(context).pop();
+                              });
+                            }
                           });
                         },
                         child: new Container(

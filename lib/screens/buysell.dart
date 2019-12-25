@@ -93,7 +93,13 @@ class BuySellActivityState extends State<BuySellActivity> {
   void accountsapi() {
     checkInternet().then((internet) {
       if (internet == null || !internet) {
-        oneButtonDialog(context, "No Internet connection", "", true);
+        Future<bool> dialog =
+            retryDialog(context, "No Internet connection", "");
+        dialog.then((onValue) {
+          if (onValue) {
+            accountsapi();
+          }
+        });
       } else {
         Future<Accounts> data = getAccounts({"user_id": userID});
         data.then((response) {
@@ -164,69 +170,85 @@ class BuySellActivityState extends State<BuySellActivity> {
               }
               var price = lastTradedPrice;
               var invested = double.parse(shares.text) * price;
-              Future<dynamic> load = addGetResponse(API.BUYSELL, {
-                "user_id": userID,
-                "ticker": id.toString(),
-                "name": tickerMap[id].tradingSymbol,
-                "exchange": tickerMap[id].segment,
-                "shares": int.parse(shares.text).toString(),
-                "price": price.toStringAsFixed(2),
-                "invested": invested.toStringAsFixed(2),
-                "type": sell ? "0" : "1",
-                "expiry": tickerMap[id].expiry,
-              });
-              load.then((response) {
-                if (response != null) {
-                  if (response["meta"]["status"] == "200" ||
-                      response["meta"]["status"] == "201") {
-                    orders.insert(
-                        0,
-                        new Order(
-                            userID: userID,
-                            ticker: id.toString(),
-                            name: tickerMap[id].tradingSymbol,
-                            exchange: tickerMap[id].segment,
-                            shares: int.parse(shares.text).toString(),
-                            price: price.toString(),
-                            invested: invested.toStringAsFixed(2),
-                            type: sell ? "0" : "1",
-                            createdDateTime: DateTime.now().toString()));
-                    if (positionsMap[id.toString()] != null) {
-                      var positionInvested =
-                          positionsMap[id.toString()].invested;
-                      var positionShares = positionsMap[id.toString()].shares;
-                      for (var i = 0; i < positions.length; i++) {
-                        if (positions[i].ticker == id.toString()) {
-                          positions[i].invested =
+              checkInternet().then((internet) {
+                if (internet == null || !internet) {
+                  closeActivity("Rejected", "No Internet connection", false);
+                } else {
+                  Future<dynamic> load = addGetResponse(API.BUYSELL, {
+                    "user_id": userID,
+                    "ticker": id.toString(),
+                    "name": tickerMap[id].tradingSymbol,
+                    "exchange": tickerMap[id].segment,
+                    "shares": int.parse(shares.text).toString(),
+                    "price": price.toStringAsFixed(2),
+                    "invested": invested.toStringAsFixed(2),
+                    "type": sell ? "0" : "1",
+                    "expiry": tickerMap[id].expiry,
+                  });
+                  load.then((response) {
+                    if (response != null) {
+                      if (response["meta"]["status"] == "200" ||
+                          response["meta"]["status"] == "201") {
+                        orders.insert(
+                            0,
+                            new Order(
+                                userID: userID,
+                                ticker: id.toString(),
+                                name: tickerMap[id].tradingSymbol,
+                                exchange: tickerMap[id].segment,
+                                shares: int.parse(shares.text).toString(),
+                                price: price.toString(),
+                                invested: invested.toStringAsFixed(2),
+                                type: sell ? "0" : "1",
+                                createdDateTime: DateTime.now().toString()));
+                        if (positionsMap[id.toString()] != null) {
+                          var positionInvested =
+                              positionsMap[id.toString()].invested;
+                          var positionShares =
+                              positionsMap[id.toString()].shares;
+                          for (var i = 0; i < positions.length; i++) {
+                            if (positions[i].ticker == id.toString()) {
+                              positions[i].invested =
+                                  (double.parse(positionInvested) +
+                                          (sell ? -invested : invested))
+                                      .toStringAsFixed(2);
+                              positions[i].shares = (int.parse(positionShares) +
+                                      (sell
+                                          ? -int.parse(shares.text)
+                                          : int.parse(shares.text)))
+                                  .toString();
+                              break;
+                            }
+                          }
+                          positionsMap[id.toString()].invested =
                               (double.parse(positionInvested) +
-                                      (sell ? -invested : invested))
+                                      (sell
+                                          ? -(double.parse(shares.text) *
+                                              lastTradedPrice)
+                                          : (double.parse(shares.text) *
+                                              lastTradedPrice)))
                                   .toStringAsFixed(2);
-                          positions[i].shares = (int.parse(positionShares) +
-                                  (sell
-                                      ? -int.parse(shares.text)
-                                      : int.parse(shares.text)))
-                              .toString();
-                          break;
-                        }
-                      }
-                      positionsMap[id.toString()].invested =
-                          (double.parse(positionInvested) +
-                                  (sell
-                                      ? -(double.parse(shares.text) *
-                                          lastTradedPrice)
-                                      : (double.parse(shares.text) *
-                                          lastTradedPrice)))
-                              .toStringAsFixed(2);
-                      positionsMap[id.toString()].shares =
-                          (int.parse(positionShares) +
-                                  (sell
-                                      ? -int.parse(shares.text)
-                                      : int.parse(shares.text)))
-                              .toString();
-                    } else {
-                      positions.insert(
-                          0,
-                          new Position(
+                          positionsMap[id.toString()].shares =
+                              (int.parse(positionShares) +
+                                      (sell
+                                          ? -int.parse(shares.text)
+                                          : int.parse(shares.text)))
+                                  .toString();
+                        } else {
+                          positions.insert(
+                              0,
+                              new Position(
+                                userID: userID,
+                                ticker: id.toString(),
+                                name: symbol,
+                                invested: (double.parse(shares.text) *
+                                        lastTradedPrice)
+                                    .toString(),
+                                shares: int.parse(shares.text).toString(),
+                                status: "1",
+                                expiry: tickerMap[id].expiry,
+                              ));
+                          positionsMap[id.toString()] = new Position(
                             userID: userID,
                             ticker: id.toString(),
                             name: symbol,
@@ -236,35 +258,27 @@ class BuySellActivityState extends State<BuySellActivity> {
                             shares: int.parse(shares.text).toString(),
                             status: "1",
                             expiry: tickerMap[id].expiry,
-                          ));
-                      positionsMap[id.toString()] = new Position(
-                        userID: userID,
-                        ticker: id.toString(),
-                        name: symbol,
-                        invested: (double.parse(shares.text) * lastTradedPrice)
-                            .toString(),
-                        shares: int.parse(shares.text).toString(),
-                        status: "1",
-                        expiry: tickerMap[id].expiry,
-                      );
-                    }
-                    if (positionsMap[id.toString()].shares == "0") {
-                      for (var i = 0; i < positions.length; i++) {
-                        if (positions[i].ticker == id.toString()) {
-                          positions.removeAt(i);
-                          break;
+                          );
                         }
+                        if (positionsMap[id.toString()].shares == "0") {
+                          for (var i = 0; i < positions.length; i++) {
+                            if (positions[i].ticker == id.toString()) {
+                              positions.removeAt(i);
+                              break;
+                            }
+                          }
+                          positionsMap[id.toString()] = null;
+                        }
+                        closeActivity(
+                            "Completed", response["meta"]["message"], true);
+                      } else {
+                        closeActivity(
+                            "Rejected", response["meta"]["message"], false);
                       }
-                      positionsMap[id.toString()] = null;
+                    } else {
+                      closeActivity("Rejected", "Order not placed", false);
                     }
-                    closeActivity(
-                        "Completed", response["meta"]["message"], true);
-                  } else {
-                    closeActivity(
-                        "Rejected", response["meta"]["message"], false);
-                  }
-                } else {
-                  closeActivity("Rejected", "Order not placed", false);
+                  });
                 }
               });
             } else {

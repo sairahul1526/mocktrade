@@ -39,14 +39,19 @@ class ProfileActivityState extends State<ProfileActivity>
     _controller = ScrollController();
     _controller.addListener(_scrollListener);
     orders.clear();
-    ordersapi();
     accountsapi();
   }
 
   void accountsapi() {
     checkInternet().then((internet) {
       if (internet == null || !internet) {
-        oneButtonDialog(context, "No Internet connection", "", true);
+        Future<bool> dialog =
+            retryDialog(context, "No Internet connection", "");
+        dialog.then((onValue) {
+          if (onValue) {
+            accountsapi();
+          }
+        });
       } else {
         Future<Accounts> data = getAccounts({"user_id": userID});
         data.then((response) {
@@ -56,6 +61,7 @@ class ProfileActivityState extends State<ProfileActivity>
                 amount = double.parse(response.accounts[0].amount);
               });
             }
+            ordersapi();
           }
           if (response.meta != null && response.meta.messageType == "1") {
             oneButtonDialog(context, "", response.meta.message,
@@ -147,7 +153,13 @@ class ProfileActivityState extends State<ProfileActivity>
     });
     checkInternet().then((internet) {
       if (internet == null || !internet) {
-        oneButtonDialog(context, "No Internet connection", "", true);
+        Future<bool> dialog =
+            retryDialog(context, "No Internet connection", "");
+        dialog.then((onValue) {
+          if (onValue) {
+            ordersapi();
+          }
+        });
         setState(() {
           ongoing = false;
           loading = false;

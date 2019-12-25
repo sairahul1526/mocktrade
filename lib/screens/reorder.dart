@@ -4,6 +4,7 @@ import 'package:web_socket_channel/io.dart';
 
 import '../utils/config.dart';
 import '../utils/api.dart';
+import '../utils/utils.dart';
 
 class ReordersActivity extends StatefulWidget {
   @override
@@ -60,15 +61,25 @@ class ReordersActivityState extends State<ReordersActivity>
                         marketwatch.forEach((watch) {
                           tickers.add(int.parse(watch.instrumentToken));
                         });
-                        Future<bool> load = update(
-                          API.ACCOUNT,
-                          Map.from({
-                            "watchlist": tickers.join(","),
-                          }),
-                          Map.from({'user_id': userID}),
-                        );
-                        load.then((onValue) {
-                            Navigator.pop(context, "Marketwatch saved");
+                        checkInternet().then((internet) {
+                          if (internet == null || !internet) {
+                            Future<bool> dialog = retryDialog(
+                                context, "No Internet connection", "");
+                            dialog.then((onValue) {
+                              if (onValue) {}
+                            });
+                          } else {
+                            Future<bool> load = update(
+                              API.ACCOUNT,
+                              Map.from({
+                                "watchlist": tickers.join(","),
+                              }),
+                              Map.from({'user_id': userID}),
+                            );
+                            load.then((onValue) {
+                              Navigator.pop(context, "Marketwatch saved");
+                            });
+                          }
                         });
                       },
                       child: new Text("SAVE"),

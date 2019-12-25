@@ -35,14 +35,18 @@ class PortfolioActivityState extends State<PortfolioActivity>
   void initState() {
     super.initState();
 
-    fillData();
     accountsapi();
   }
 
   void accountsapi() {
     checkInternet().then((internet) {
       if (internet == null || !internet) {
-        oneButtonDialog(context, "No Internet connection", "", true);
+        Future<bool> dialog = retryDialog(context, "No Internet connection", "");
+        dialog.then((onValue) {
+          if (onValue) {
+            accountsapi();
+          }
+        });
       } else {
         Future<Accounts> data = getAccounts({"user_id": userID});
         data.then((response) {
@@ -52,6 +56,7 @@ class PortfolioActivityState extends State<PortfolioActivity>
                 amount = double.parse(response.accounts[0].amount);
               });
             }
+            positionsapi();
           }
           if (response.meta != null && response.meta.messageType == "1") {
             oneButtonDialog(context, "", response.meta.message,
@@ -65,7 +70,12 @@ class PortfolioActivityState extends State<PortfolioActivity>
   void positionsapi() {
     checkInternet().then((internet) {
       if (internet == null || !internet) {
-        oneButtonDialog(context, "No Internet connection", "", true);
+        Future<bool> dialog = retryDialog(context, "No Internet connection", "");
+        dialog.then((onValue) {
+          if (onValue) {
+            positionsapi();
+          }
+        });
         _refreshController.refreshCompleted();
       } else {
         Future<Positions> data = getPositions({"user_id": userID});

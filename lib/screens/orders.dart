@@ -65,7 +65,13 @@ class OrdersActivityState extends State<OrdersActivity>
     });
     checkInternet().then((internet) {
       if (internet == null || !internet) {
-        oneButtonDialog(context, "No Internet connection", "", true);
+        Future<bool> dialog =
+            retryDialog(context, "No Internet connection", "");
+        dialog.then((onValue) {
+          if (onValue) {
+            ordersapi();
+          }
+        });
         setState(() {
           ongoing = false;
           loading = false;
