@@ -82,6 +82,46 @@ class Account {
   }
 }
 
+// amount
+
+class Amounts {
+  final List<Amount> amounts;
+  final Meta meta;
+  final Pagination pagination;
+
+  Amounts({this.amounts, this.meta, this.pagination});
+
+  factory Amounts.fromJson(Map<String, dynamic> json) {
+    return Amounts(
+      amounts: json['data'] != null
+          ? List<Amount>.from(json['data'].map((i) => Amount.fromJson(i)))
+          : new List<Amount>(),
+      meta: Meta.fromJson(json['meta']),
+      pagination: json['pagination'] != null
+          ? Pagination.fromJson(json['pagination'])
+          : null,
+    );
+  }
+}
+
+class Amount {
+  final String id;
+  final String userID;
+  final String amount;
+  final String date;
+
+  Amount({this.id, this.userID, this.amount, this.date});
+
+  factory Amount.fromJson(Map<String, dynamic> json) {
+    return Amount(
+      id: json['id'],
+      userID: json['user_id'],
+      amount: json['amount'],
+      date: json['date'],
+    );
+  }
+}
+
 // login
 
 class Logins {

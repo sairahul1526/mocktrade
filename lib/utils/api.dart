@@ -15,6 +15,16 @@ Future<Accounts> getAccounts(Map<String, String> query) async {
   return Accounts.fromJson(json.decode(response.body));
 }
 
+// amount
+
+Future<Amounts> getAmounts(Map<String, String> query) async {
+  final response = await http
+      .get(Uri.http(API.URL, API.AMOUNT, query), headers: headers)
+      .timeout(Duration(seconds: timeout));
+
+  return Amounts.fromJson(json.decode(response.body));
+}
+
 // login
 
 Future<Logins> getLogins(Map<String, String> query) async {

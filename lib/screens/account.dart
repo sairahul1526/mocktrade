@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:mocktrade/screens/profile.dart';
+import 'package:mocktrade/screens/funds.dart';
+import 'package:mocktrade/screens/history.dart';
+import 'package:mocktrade/screens/performance.dart';
 
 import '../main.dart';
 import '../utils/config.dart';
@@ -55,7 +57,7 @@ class AccountActivityState extends State<AccountActivity> {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => new ProfileActivity()),
+                          builder: (context) => new FundsActivity()),
                     );
                   },
                   child: new Container(
@@ -64,8 +66,50 @@ class AccountActivityState extends State<AccountActivity> {
                     child: new Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: <Widget>[
-                        new Text("Profile"),
-                        new Icon(Icons.account_circle)
+                        new Text("Funds"),
+                        new Icon(Icons.attach_money)
+                      ],
+                    ),
+                  ),
+                ),
+                new Divider(),
+                new GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => new HistoryActivity()),
+                    );
+                  },
+                  child: new Container(
+                    color: Colors.transparent,
+                    padding: EdgeInsets.all(15),
+                    child: new Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: <Widget>[
+                        new Text("History"),
+                        new Icon(Icons.history)
+                      ],
+                    ),
+                  ),
+                ),
+                new Divider(),
+                new GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => new PerformanceActivity()),
+                    );
+                  },
+                  child: new Container(
+                    color: Colors.transparent,
+                    padding: EdgeInsets.all(15),
+                    child: new Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: <Widget>[
+                        new Text("Performance"),
+                        new Icon(Icons.trending_up)
                       ],
                     ),
                   ),

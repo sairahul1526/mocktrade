@@ -12,6 +12,7 @@ import 'package:http/http.dart' as http;
 import './config.dart';
 
 DateFormat headingDateFormat = new DateFormat("EEE, MMM d, ''yy");
+DateFormat dateFormat = new DateFormat('yyyy-MM-dd');
 
 class HexColor extends Color {
   static int _getColorFromHex(String hexColor) {
