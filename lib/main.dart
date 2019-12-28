@@ -38,6 +38,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   bool loaded = false;
+  bool shouldLogin = false;
 
   @override
   void initState() {
@@ -271,6 +272,7 @@ class _MyHomePageState extends State<MyHomePage> {
     } else {
       setState(() {
         loaded = true;
+        shouldLogin = true;
       });
     }
   }
@@ -317,7 +319,7 @@ class _MyHomePageState extends State<MyHomePage> {
                 height: 200,
                 child: new Image.asset('assets/bull.jpg'),
               ),
-              loaded
+              loaded && shouldLogin
                   ? new Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
@@ -336,7 +338,7 @@ class _MyHomePageState extends State<MyHomePage> {
               new Container(
                 height: 10,
               ),
-              loaded
+              loaded && shouldLogin
                   ? new FlatButton(
                       onPressed: () {
                         Navigator.of(context).pushReplacement(
