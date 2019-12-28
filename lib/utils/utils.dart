@@ -37,9 +37,18 @@ int converttoint(Iterable<int> data) {
 }
 
 Future<String> getTickers() async {
-  int today = DateTime.now().day;
-  for (var i = 0; i < today; i++) {
-    prefs.setString(i.toString() + "_tickers", "");
+  if (prefs != null) {
+    for (var i = 1; i < 30; i++) {
+      prefs.setString(
+          dateFormat.format(DateTime.now().add(new Duration(days: -i))) +
+              "_tickers",
+          "");
+    }
+    String resp =
+        prefs.getString(dateFormat.format(DateTime.now()) + "_tickers");
+    if (resp != null && resp.length > 0) {
+      return resp;
+    }
   }
   final response =
       await http.get("https://api.kite.trade/instruments", headers: {
@@ -47,6 +56,10 @@ Future<String> getTickers() async {
     "Authorization": "token " + apiKey + ":" + accessToken + ""
   });
 
+  if (response.statusCode == 200) {
+    prefs.setString(
+        dateFormat.format(DateTime.now()) + "_tickers", response.body);
+  }
   return response.body;
 }
 
@@ -147,11 +160,10 @@ Future<dynamic> fillDataAPI(String url, List<String> ticks) async {
     if (!init) {
       url += "&";
     }
-    url += "i="+tick;
+    url += "i=" + tick;
     init = false;
   }
-  final response =
-      await http.get(url, headers: {
+  final response = await http.get(url, headers: {
     "X-Kite-Version": "3",
     "Authorization": "token " + apiKey + ":" + accessToken + ""
   });

@@ -112,49 +112,21 @@ class _MyHomePageState extends State<MyHomePage> {
   void tickers() {
     Future<bool> prefInit = initSharedPreference();
     prefInit.then((onValue) {
-      if (onValue) {
-        String response =
-            prefs.getString(DateTime.now().day.toString() + "_tickers");
-        if (response != null && response.length > 0) {
-          parseTickers(response);
-        } else {
-          checkInternet().then((internet) {
-            if (internet == null || !internet) {
-              Future<bool> dialog =
-                  retryDialog(context, "No Internet connection", "");
-              dialog.then((onValue) {
-                if (onValue) {
-                  tickers();
-                }
-              });
-            } else {
-              getTickers().then((response) {
-                prefs.setString(
-                    DateTime.now().day.toString() + "_tickers", response);
-                parseTickers(response);
-              });
+      checkInternet().then((internet) {
+        if (internet == null || !internet) {
+          Future<bool> dialog =
+              retryDialog(context, "No Internet connection", "");
+          dialog.then((onValue) {
+            if (onValue) {
+              tickers();
             }
           });
+        } else {
+          getTickers().then((response) {
+            parseTickers(response);
+          });
         }
-      } else {
-        checkInternet().then((internet) {
-          if (internet == null || !internet) {
-            Future<bool> dialog =
-                retryDialog(context, "No Internet connection", "");
-            dialog.then((onValue) {
-              if (onValue) {
-                tickers();
-              }
-            });
-          } else {
-            getTickers().then((response) {
-              prefs.setString(
-                  DateTime.now().day.toString() + "_tickers", response);
-              parseTickers(response);
-            });
-          }
-        });
-      }
+      });
     });
   }
 
