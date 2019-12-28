@@ -42,6 +42,7 @@ dev_dependencies:
   firebase_analytics: ^5.0.2
   charts_flutter: ^0.8.1
   syncfusion_flutter_charts: ^17.4.40
+  firebase_crashlytics: ^0.1.1+2
 
 
 # For information on the generic Dart part of this file, see the

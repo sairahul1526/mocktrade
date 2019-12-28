@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:mocktrade/utils/api.dart';
 import 'dart:convert';
 import 'dart:io' show Platform;
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 
 import './screens/dashboard.dart';
 import './screens/login.dart';
@@ -12,6 +13,8 @@ import './utils/config.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
+  Crashlytics.instance.enableInDevMode = true;
+  FlutterError.onError = Crashlytics.instance.recordFlutterError;
   runApp(new MaterialApp(
     title: "mocktrade",
     home: new MyApp(),
