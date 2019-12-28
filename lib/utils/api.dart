@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 
 import './models.dart';
 import './config.dart';
+import './utils.dart';
 
 // account
 
@@ -18,10 +19,32 @@ Future<Accounts> getAccounts(Map<String, String> query) async {
 // amount
 
 Future<Amounts> getAmounts(Map<String, String> query) async {
+  if (prefs != null) {
+    for (var i = 1; i < 30; i++) {
+      prefs.setString(
+          dateFormat.format(DateTime.now().add(new Duration(days: -i))) +
+              "_" +
+              query["user_id"] +
+              "_amounts",
+          "");
+    }
+    String resp = prefs.getString(dateFormat.format(DateTime.now()) +
+        "_" +
+        query["user_id"] +
+        "_amounts");
+    if (resp != null && resp.length > 0) {
+      return Amounts.fromJson(json.decode(resp));
+    }
+  }
   final response = await http
       .get(Uri.http(API.URL, API.AMOUNT, query), headers: headers)
       .timeout(Duration(seconds: timeout));
 
+  if (response.statusCode == 200) {
+    prefs.setString(
+        dateFormat.format(DateTime.now()) + "_" + query["user_id"] + "_amounts",
+        response.body);
+  }
   return Amounts.fromJson(json.decode(response.body));
 }
 
