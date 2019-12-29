@@ -188,15 +188,16 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
     int noPackets = converttoint(data.getRange(0, 2));
 
     int j = 2;
+    int len = data.length;
     for (var i = 0; i < noPackets; i++) {
-      if (converttoint(data.getRange(j, j + 2)) > 40) {
+      if ((len >= (j + 2 + 44)) && converttoint(data.getRange(j, j + 2)) > 40) {
         tickers[converttoint(data.getRange(j + 2, j + 2 + 4))] =
             converttoint(data.getRange(j + 2 + 4, j + 2 + 8)).toDouble() / 100;
         closes[converttoint(data.getRange(j + 2, j + 2 + 4))] =
             converttoint(data.getRange(j + 2 + 40, j + 2 + 44)).toDouble() /
                 100;
         j = j + 2 + 44;
-      } else {
+      } else if (len >= (j + 2 + 24)) {
         tickers[converttoint(data.getRange(j + 2, j + 2 + 4))] =
             converttoint(data.getRange(j + 2 + 4, j + 2 + 8)).toDouble() / 100;
         closes[converttoint(data.getRange(j + 2, j + 2 + 4))] =
@@ -380,7 +381,7 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
                                                     new Expanded(
                                                       child: new Text(
                                                         marketwatch[i]
-                                                                .tradingSymbol,
+                                                            .tradingSymbol,
                                                         style: TextStyle(
                                                           fontSize: 15,
                                                         ),
