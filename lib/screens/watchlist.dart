@@ -48,7 +48,8 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
   void accountsapi() {
     checkInternet().then((internet) {
       if (internet == null || !internet) {
-        Future<bool> dialog = retryDialog(context, "No Internet connection", "");
+        Future<bool> dialog =
+            retryDialog(context, "No Internet connection", "");
         dialog.then((onValue) {
           if (onValue) {
             accountsapi();
@@ -112,7 +113,7 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
                     child: const Text('DONE'),
                     onPressed: () {
                       if (name.text.length > 0) {
-                         checkInternet().then((internet) {
+                        checkInternet().then((internet) {
                           if (internet == null || !internet) {
                             Future<bool> dialog = retryDialog(
                                 context, "No Internet connection", "");
@@ -146,13 +147,13 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
   void positionsapi() {
     checkInternet().then((internet) {
       if (internet == null || !internet) {
-         Future<bool> dialog = retryDialog(
-              context, "No Internet connection", "");
-          dialog.then((onValue) {
-            if (onValue) {
-              takeName();
-            }
-          });
+        Future<bool> dialog =
+            retryDialog(context, "No Internet connection", "");
+        dialog.then((onValue) {
+          if (onValue) {
+            takeName();
+          }
+        });
       } else {
         Future<Positions> data = getPositions({"user_id": userID});
         data.then((response) {
@@ -376,46 +377,52 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
                                                       MainAxisAlignment
                                                           .spaceBetween,
                                                   children: <Widget>[
-                                                    new Text(
-                                                      marketwatch[i]
-                                                          .tradingSymbol,
-                                                      style: TextStyle(
-                                                        fontSize: 15,
+                                                    new Expanded(
+                                                      child: new Text(
+                                                        marketwatch[i]
+                                                                .tradingSymbol,
+                                                        style: TextStyle(
+                                                          fontSize: 15,
+                                                        ),
                                                       ),
                                                     ),
-                                                    new Text(
-                                                      tickers[int.parse(marketwatch[
-                                                                          i]
-                                                                      .instrumentToken)] ==
-                                                                  null ||
-                                                              closes[int.parse(
-                                                                      marketwatch[
+                                                    new Row(
+                                                      children: <Widget>[
+                                                        new Text(
+                                                          tickers[int.parse(marketwatch[
                                                                               i]
                                                                           .instrumentToken)] ==
-                                                                  null
-                                                          ? ""
-                                                          : tickers[int.parse(
-                                                                  marketwatch[i]
-                                                                      .instrumentToken)]
-                                                              .toStringAsFixed(
-                                                                  2),
-                                                      style: TextStyle(
-                                                        color: tickers[int.parse(
-                                                                        marketwatch[i]
+                                                                      null ||
+                                                                  closes[int.parse(
+                                                                          marketwatch[i]
+                                                                              .instrumentToken)] ==
+                                                                      null
+                                                              ? ""
+                                                              : tickers[int.parse(
+                                                                      marketwatch[
+                                                                              i]
+                                                                          .instrumentToken)]
+                                                                  .toStringAsFixed(
+                                                                      2),
+                                                          style: TextStyle(
+                                                            color: tickers[int.parse(marketwatch[i]
                                                                             .instrumentToken)] ==
-                                                                    null ||
-                                                                closes[int.parse(
-                                                                        marketwatch[i]
+                                                                        null ||
+                                                                    closes[int.parse(marketwatch[i]
                                                                             .instrumentToken)] ==
-                                                                    null
-                                                            ? Colors.black
-                                                            : tickers[int.parse(marketwatch[i].instrumentToken)] -
-                                                                        closes[int.parse(
-                                                                            marketwatch[i].instrumentToken)] >
-                                                                    0
-                                                                ? Colors.green
-                                                                : Colors.red,
-                                                      ),
+                                                                        null
+                                                                ? Colors.black
+                                                                : tickers[int.parse(marketwatch[i].instrumentToken)] -
+                                                                            closes[int.parse(marketwatch[i]
+                                                                                .instrumentToken)] >
+                                                                        0
+                                                                    ? Colors
+                                                                        .green
+                                                                    : Colors
+                                                                        .red,
+                                                          ),
+                                                        )
+                                                      ],
                                                     ),
                                                   ],
                                                 ),

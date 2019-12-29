@@ -213,15 +213,21 @@ class OrdersActivityState extends State<OrdersActivity>
                                           mainAxisAlignment:
                                               MainAxisAlignment.spaceBetween,
                                           children: <Widget>[
-                                            new Text(
-                                              orders[i].name,
-                                              style: TextStyle(
-                                                fontSize: 15,
+                                            new Expanded(
+                                              child: new Text(
+                                                orders[i].name,
+                                                style: TextStyle(
+                                                  fontSize: 15,
+                                                ),
                                               ),
                                             ),
-                                            new Text(orders[i].shares +
-                                                " X " +
-                                                orders[i].price),
+                                            new Row(
+                                              children: <Widget>[
+                                                new Text(orders[i].shares +
+                                                    " X " +
+                                                    orders[i].price)
+                                              ],
+                                            ),
                                           ],
                                         ),
                                         new Container(

@@ -55,8 +55,12 @@ class SearchActivityState extends State<SearchActivity> {
                             setState(() {
                               tickerSearchList = tickerList
                                   .where((i) =>
-                                      i.name.contains(text) ||
-                                      i.tradingSymbol.contains(text))
+                                      i.name
+                                          .toLowerCase()
+                                          .contains(text.toLowerCase()) ||
+                                      i.tradingSymbol
+                                          .toLowerCase()
+                                          .contains(text.toLowerCase()))
                                   .toList();
                             });
                           } else {

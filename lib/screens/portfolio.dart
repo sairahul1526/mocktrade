@@ -443,33 +443,39 @@ class PortfolioActivityState extends State<PortfolioActivity>
                                           mainAxisAlignment:
                                               MainAxisAlignment.spaceBetween,
                                           children: <Widget>[
-                                            new Text(
-                                              positions[i].name,
-                                              style: TextStyle(
-                                                fontSize: 15,
+                                            new Expanded(
+                                              child: new Text(
+                                                positions[i].name,
+                                                style: TextStyle(
+                                                  fontSize: 15,
+                                                ),
                                               ),
                                             ),
-                                            new Text(
-                                              ((tickers[int.parse(positions[i]
-                                                              .ticker)] *
+                                            new Row(
+                                              children: <Widget>[
+                                                new Text(
+                                                  ((tickers[int.parse(positions[i]
+                                                                  .ticker)] *
+                                                              double.parse(positions[i]
+                                                                  .shares)) -
                                                           double.parse(positions[i]
-                                                              .shares)) -
-                                                      double.parse(positions[i]
-                                                          .invested))
-                                                  .toStringAsFixed(2),
-                                              style: TextStyle(
-                                                  color: (tickers[int.parse(
-                                                                  positions[i]
-                                                                      .ticker)] *
-                                                              double.parse(positions[i].shares)) >
-                                                          double.parse(positions[i].invested)
-                                                      ? Colors.green
-                                                      : ((tickers[int.parse(positions[i].ticker)] *
-                                                                  double.parse(positions[i]
-                                                                          .shares)) <
+                                                              .invested))
+                                                      .toStringAsFixed(2),
+                                                  style: TextStyle(
+                                                      color: (tickers[int.parse(
+                                                                      positions[i]
+                                                                          .ticker)] *
+                                                                  double.parse(positions[i].shares)) >
                                                               double.parse(positions[i].invested)
-                                                          ? Colors.red
-                                                          : Colors.black)),
+                                                          ? Colors.green
+                                                          : ((tickers[int.parse(positions[i].ticker)] *
+                                                                      double.parse(positions[i]
+                                                                              .shares)) <
+                                                                  double.parse(positions[i].invested)
+                                                              ? Colors.red
+                                                              : Colors.black)),
+                                                )
+                                              ],
                                             ),
                                           ],
                                         ),

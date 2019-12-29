@@ -209,7 +209,30 @@ class _MyHomePageState extends State<MyHomePage> {
         nfoMap[tickerDetails[0]] = new Ticker(
             instrumentToken: tickerDetails[0],
             exchangeToken: tickerDetails[1],
-            tradingSymbol: tickerDetails[2],
+            tradingSymbol: tickerDetails[10] == "NFO-FUT"
+                ? tickerDetails[2].split(regex)[0] +
+                    " " +
+                    nameMonthFormat
+                        .format(DateTime.parse(tickerDetails[5]))
+                        .toUpperCase() +
+                    " " +
+                    tickerDetails[9]
+                : tickerDetails[2].split(regex)[0] +
+                    " " +
+                    (tickerDetails[2].split(regex)[0] == "NIFTY" ||
+                            tickerDetails[2].split(regex)[0] == "BANKNIFTY"
+                        ? nameFormat
+                            .format(DateTime.parse(tickerDetails[5]))
+                            .toUpperCase()
+                        : nameMonthFormat
+                            .format(DateTime.parse(tickerDetails[5]))
+                            .toUpperCase()) +
+                    " " +
+                    (num.parse(tickerDetails[6].split("\.")[1]) == 0
+                        ? num.parse(tickerDetails[6].split("\.")[0]).toString()
+                        : tickerDetails[6]) +
+                    " " +
+                    tickerDetails[9],
             name: tickerDetails[3],
             expiry: tickerDetails[5],
             strike: tickerDetails[6],
@@ -221,7 +244,30 @@ class _MyHomePageState extends State<MyHomePage> {
         nfoList.add(new Ticker(
             instrumentToken: tickerDetails[0],
             exchangeToken: tickerDetails[1],
-            tradingSymbol: tickerDetails[2],
+            tradingSymbol: tickerDetails[10] == "NFO-FUT"
+                ? tickerDetails[2].split(regex)[0] +
+                    " " +
+                    nameMonthFormat
+                        .format(DateTime.parse(tickerDetails[5]))
+                        .toUpperCase() +
+                    " " +
+                    tickerDetails[9]
+                : tickerDetails[2].split(regex)[0] +
+                    " " +
+                    (tickerDetails[2].split(regex)[0] == "NIFTY" ||
+                            tickerDetails[2].split(regex)[0] == "BANKNIFTY"
+                        ? nameFormat
+                            .format(DateTime.parse(tickerDetails[5]))
+                            .toUpperCase()
+                        : nameMonthFormat
+                            .format(DateTime.parse(tickerDetails[5]))
+                            .toUpperCase()) +
+                    " " +
+                    (num.parse(tickerDetails[6].split("\.")[1]) == 0
+                        ? num.parse(tickerDetails[6].split("\.")[0]).toString()
+                        : tickerDetails[6]) +
+                    " " +
+                    tickerDetails[9],
             name: tickerDetails[3],
             expiry: tickerDetails[5],
             strike: tickerDetails[6],
@@ -262,12 +308,14 @@ class _MyHomePageState extends State<MyHomePage> {
         } else {
           Future<bool> load = checkAccessToken();
           load.then((response) {
-            setState(() {
-              loaded = true;
-            });
             if (response) {
               Navigator.of(context).pushReplacement(new MaterialPageRoute(
                   builder: (BuildContext context) => new DashboardActivity()));
+            } else {
+              setState(() {
+                loaded = true;
+                shouldLogin = true;
+              });
             }
           });
         }
