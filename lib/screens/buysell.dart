@@ -153,11 +153,6 @@ class BuySellActivityState extends State<BuySellActivity> {
             setState(() {
               loading = true;
             });
-            // if (!isMarketOpen()) {
-            //   closeActivity("Rejected",
-            //       "Order was placed outside of trading hours.", false);
-            //   return;
-            // }
             if (shares.text.length > 0 &&
                 shares.text != "0" &&
                 lastTradedPrice != null &&
