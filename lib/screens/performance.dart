@@ -56,7 +56,7 @@ class PerformanceActivityState extends State<PerformanceActivity> {
               dateFormat.format(new DateTime.now()),
           "orderby": "date",
           "sortby": "desc",
-        });
+        }, 1);
         data.then((response) {
           setState(() {
             loading = false;

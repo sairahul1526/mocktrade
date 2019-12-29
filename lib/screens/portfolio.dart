@@ -48,7 +48,7 @@ class PortfolioActivityState extends State<PortfolioActivity>
           }
         });
       } else {
-        Future<Accounts> data = getAccounts({"user_id": userID});
+        Future<Accounts> data = getAccounts({"user_id": userID}, 1);
         data.then((response) {
           if (response.accounts != null) {
             if (response.accounts.length > 0) {
@@ -78,7 +78,7 @@ class PortfolioActivityState extends State<PortfolioActivity>
         });
         _refreshController.refreshCompleted();
       } else {
-        Future<Positions> data = getPositions({"user_id": userID});
+        Future<Positions> data = getPositions({"user_id": userID}, 1);
         data.then((response) {
             _refreshController.refreshCompleted();
           if (response.positions != null) {

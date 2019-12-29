@@ -86,7 +86,7 @@ class OrdersActivityState extends State<OrdersActivity>
           "sortby": "desc",
           "status": "1",
           "today": "true",
-        });
+        }, 1);
         data.then((response) {
           _refreshController.refreshCompleted();
           if (response.orders != null && response.orders.length > 0) {

@@ -101,7 +101,7 @@ class BuySellActivityState extends State<BuySellActivity> {
           }
         });
       } else {
-        Future<Accounts> data = getAccounts({"user_id": userID});
+        Future<Accounts> data = getAccounts({"user_id": userID}, 1);
         data.then((response) {
           if (response.accounts != null) {
             if (response.accounts.length > 0) {
@@ -169,17 +169,20 @@ class BuySellActivityState extends State<BuySellActivity> {
                 if (internet == null || !internet) {
                   closeActivity("Rejected", "No Internet connection", false);
                 } else {
-                  Future<dynamic> load = addGetResponse(API.BUYSELL, {
-                    "user_id": userID,
-                    "ticker": id.toString(),
-                    "name": tickerMap[id].tradingSymbol,
-                    "exchange": tickerMap[id].segment,
-                    "shares": int.parse(shares.text).toString(),
-                    "price": price.toStringAsFixed(2),
-                    "invested": invested.toStringAsFixed(2),
-                    "type": sell ? "0" : "1",
-                    "expiry": tickerMap[id].expiry,
-                  });
+                  Future<dynamic> load = addGetResponse(
+                      API.BUYSELL,
+                      {
+                        "user_id": userID,
+                        "ticker": id.toString(),
+                        "name": tickerMap[id].tradingSymbol,
+                        "exchange": tickerMap[id].segment,
+                        "shares": int.parse(shares.text).toString(),
+                        "price": price.toStringAsFixed(2),
+                        "invested": invested.toStringAsFixed(2),
+                        "type": sell ? "0" : "1",
+                        "expiry": tickerMap[id].expiry,
+                      },
+                      1);
                   load.then((response) {
                     if (response != null) {
                       if (response["meta"]["status"] == "200" ||

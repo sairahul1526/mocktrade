@@ -138,12 +138,12 @@ class SearchActivityState extends State<SearchActivity> {
                               });
                             } else {
                               Future<bool> load = update(
-                                API.ACCOUNT,
-                                Map.from({
-                                  "watchlist": tickers.join(","),
-                                }),
-                                Map.from({'user_id': userID}),
-                              );
+                                  API.ACCOUNT,
+                                  Map.from({
+                                    "watchlist": tickers.join(","),
+                                  }),
+                                  Map.from({'user_id': userID}),
+                                  1);
                               load.then((onValue) {
                                 Navigator.of(context).pop();
                               });

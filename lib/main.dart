@@ -77,8 +77,11 @@ class _MyHomePageState extends State<MyHomePage> {
         });
       } else {
         Future<Timings> data =
-            getTimings({"day": DateTime.now().weekday.toString()});
+            getTimings({"day": DateTime.now().weekday.toString()}, 1);
+        print(data);
         data.then((response) {
+          print("response");
+          print(response);
           if (response.timings != null && response.timings.length > 0) {
             holiday = response.timings[0].holiday == "1";
             List<String> opening = response.timings[0].open.split(":");

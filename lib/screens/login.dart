@@ -20,7 +20,7 @@ class LoginActivityState extends State<LoginActivity> {
   void initState() {
     super.initState();
 
-    getLogins({}).then((response) {
+    getLogins({}, 1).then((response) {
       setState(() {
         selectedUrl = response.logins[0].url;
       });
@@ -32,7 +32,7 @@ class LoginActivityState extends State<LoginActivity> {
     flutterWebviewPlugin.onUrlChanged.listen((String url) {
       String token = Uri.parse(url).queryParameters["request_token"];
       if (token != null && token.length > 0) {
-        getTokens({"tok": token}).then((response) {
+        getTokens({"tok": token}, 1).then((response) {
           accessToken = response.tokens[0].token;
           prefs.setString("accessToken", accessToken);
           userID = response.tokens[0].userID;

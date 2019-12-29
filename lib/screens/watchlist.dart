@@ -57,7 +57,7 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
         });
         _refreshController.refreshCompleted();
       } else {
-        Future<Accounts> data = getAccounts({"user_id": userID});
+        Future<Accounts> data = getAccounts({"user_id": userID}, 1);
         data.then((response) {
           _refreshController.refreshCompleted();
           if (response.accounts != null) {
@@ -129,6 +129,7 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
                                 "user_id": userID,
                                 "name": name.text,
                               }),
+                              1
                             );
                             load.then((onValue) {
                               prefs.setString("name", name.text);
@@ -155,7 +156,7 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
           }
         });
       } else {
-        Future<Positions> data = getPositions({"user_id": userID});
+        Future<Positions> data = getPositions({"user_id": userID}, 1);
         data.then((response) {
           if (response.positions != null) {
             positionsMap.clear();

@@ -40,7 +40,7 @@ class FundsActivityState extends State<FundsActivity>
           }
         });
       } else {
-        Future<Accounts> data = getAccounts({"user_id": userID});
+        Future<Accounts> data = getAccounts({"user_id": userID}, 1);
         data.then((response) {
           if (response.accounts != null) {
             if (response.accounts.length > 0) {
