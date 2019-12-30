@@ -3,6 +3,7 @@ import 'package:mocktrade/utils/api.dart';
 import 'package:mocktrade/utils/models.dart';
 import 'dart:convert';
 import 'package:web_socket_channel/io.dart';
+import 'dart:async';
 
 import '../utils/config.dart';
 import '../utils/utils.dart';
@@ -40,19 +41,27 @@ class FundsActivityState extends State<FundsActivity>
           }
         });
       } else {
-        Future<Accounts> data = getAccounts({"user_id": userID}, 1);
+        Future<Accounts> data = getAccounts({"user_id": userID});
         data.then((response) {
-          if (response.accounts != null) {
-            if (response.accounts.length > 0) {
-              setState(() {
-                amount = double.parse(response.accounts[0].amount);
-              });
+          if (response != null) {
+            if (response.accounts != null) {
+              if (response.accounts.length > 0) {
+                setState(() {
+                  amount = double.parse(response.accounts[0].amount);
+                });
+              }
+              fillData();
             }
-            fillData();
-          }
-          if (response.meta != null && response.meta.messageType == "1") {
-            oneButtonDialog(context, "", response.meta.message,
-                !(response.meta.status == STATUS_403));
+            if (response.meta != null && response.meta.messageType == "1") {
+              oneButtonDialog(context, "", response.meta.message,
+                  !(response.meta.status == STATUS_403));
+            }
+          } else {
+            new Timer(const Duration(milliseconds: retry), () {
+              setState(() {
+                accountsapi();
+              });
+            });
           }
         });
       }

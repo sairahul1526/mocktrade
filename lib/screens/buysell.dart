@@ -4,6 +4,7 @@ import 'package:modal_progress_hud/modal_progress_hud.dart';
 import 'package:slider_button/slider_button.dart';
 import 'package:web_socket_channel/io.dart';
 import 'dart:convert';
+import 'dart:async';
 
 import './alert.dart';
 import '../utils/models.dart';
@@ -101,16 +102,24 @@ class BuySellActivityState extends State<BuySellActivity> {
           }
         });
       } else {
-        Future<Accounts> data = getAccounts({"user_id": userID}, 1);
+        Future<Accounts> data = getAccounts({"user_id": userID});
         data.then((response) {
-          if (response.accounts != null) {
-            if (response.accounts.length > 0) {
-              amount = double.parse(response.accounts[0].amount);
+          if (response != null) {
+            if (response.accounts != null) {
+              if (response.accounts.length > 0) {
+                amount = double.parse(response.accounts[0].amount);
+              }
             }
-          }
-          if (response.meta != null && response.meta.messageType == "1") {
-            oneButtonDialog(context, "", response.meta.message,
-                !(response.meta.status == STATUS_403));
+            if (response.meta != null && response.meta.messageType == "1") {
+              oneButtonDialog(context, "", response.meta.message,
+                  !(response.meta.status == STATUS_403));
+            }
+          } else {
+            new Timer(const Duration(milliseconds: retry), () {
+              setState(() {
+                accountsapi();
+              });
+            });
           }
         });
       }
@@ -169,20 +178,17 @@ class BuySellActivityState extends State<BuySellActivity> {
                 if (internet == null || !internet) {
                   closeActivity("Rejected", "No Internet connection", false);
                 } else {
-                  Future<dynamic> load = addGetResponse(
-                      API.BUYSELL,
-                      {
-                        "user_id": userID,
-                        "ticker": id.toString(),
-                        "name": tickerMap[id].tradingSymbol,
-                        "exchange": tickerMap[id].segment,
-                        "shares": int.parse(shares.text).toString(),
-                        "price": price.toStringAsFixed(2),
-                        "invested": invested.toStringAsFixed(2),
-                        "type": sell ? "0" : "1",
-                        "expiry": tickerMap[id].expiry,
-                      },
-                      1);
+                  Future<dynamic> load = addGetResponse(API.BUYSELL, {
+                    "user_id": userID,
+                    "ticker": id.toString(),
+                    "name": tickerMap[id].tradingSymbol,
+                    "exchange": tickerMap[id].segment,
+                    "shares": int.parse(shares.text).toString(),
+                    "price": price.toStringAsFixed(2),
+                    "invested": invested.toStringAsFixed(2),
+                    "type": sell ? "0" : "1",
+                    "expiry": tickerMap[id].expiry,
+                  });
                   load.then((response) {
                     if (response != null) {
                       if (response["meta"]["status"] == "200" ||

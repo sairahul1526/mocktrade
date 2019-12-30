@@ -124,11 +124,12 @@ class SearchActivityState extends State<SearchActivity> {
                                 context, "Already added to marketwatch");
                             return;
                           }
-                          marketwatch.add(tickerSearchList[i]);
                           List<int> tickers = new List();
                           marketwatch.forEach((watch) {
                             tickers.add(int.parse(watch.instrumentToken));
                           });
+                          tickers.add(
+                              int.parse(tickerSearchList[i].instrumentToken));
                           checkInternet().then((internet) {
                             if (internet == null || !internet) {
                               Future<bool> dialog = retryDialog(
@@ -142,10 +143,15 @@ class SearchActivityState extends State<SearchActivity> {
                                   Map.from({
                                     "watchlist": tickers.join(","),
                                   }),
-                                  Map.from({'user_id': userID}),
-                                  1);
+                                  Map.from({'user_id': userID}));
                               load.then((onValue) {
-                                Navigator.of(context).pop();
+                                setState(() {
+                                  loading = false;
+                                });
+                                if (onValue != null) {
+                                  marketwatch.add(tickerSearchList[i]);
+                                  Navigator.of(context).pop();
+                                }
                               });
                             }
                           });

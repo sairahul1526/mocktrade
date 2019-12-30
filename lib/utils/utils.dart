@@ -11,7 +11,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 import './config.dart';
 
-DateFormat headingDateFormat = new DateFormat("EEE, MMM d, ''yy");
+DateFormat headingDateFormat = new DateFormat("h:mm a EEE, MMM d, ''yy");
 DateFormat nameFormat = new DateFormat("d MMM yy");
 DateFormat nameMonthFormat = new DateFormat("MMM yy");
 DateFormat dateFormat = new DateFormat('yyyy-MM-dd');
@@ -70,16 +70,6 @@ SharedPreferences prefs;
 Future<bool> initSharedPreference() async {
   prefs = await SharedPreferences.getInstance();
   if (prefs != null) {
-    return true;
-  }
-  return false;
-}
-
-bool isMarketOpen() {
-  if (holiday) {
-    return false;
-  }
-  if (DateTime.now().isAfter(open) && DateTime.now().isBefore(close)) {
     return true;
   }
   return false;

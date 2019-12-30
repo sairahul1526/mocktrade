@@ -5,6 +5,7 @@ import 'package:mocktrade/utils/models.dart';
 import 'dart:convert';
 import 'package:web_socket_channel/io.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
+import 'dart:async';
 
 import './buysell.dart';
 import './search.dart';
@@ -57,30 +58,38 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
         });
         _refreshController.refreshCompleted();
       } else {
-        Future<Accounts> data = getAccounts({"user_id": userID}, 1);
+        Future<Accounts> data = getAccounts({"user_id": userID});
         data.then((response) {
-          _refreshController.refreshCompleted();
-          if (response.accounts != null) {
-            if (response.accounts.length > 0) {
-              prefs.setString("name", response.accounts[0].name);
-              amount = double.parse(response.accounts[0].amount);
-              marketwatch.clear();
-              response.accounts[0].watchlist.split(",").forEach((id) {
-                if (tickerMap[id] != null) {
-                  marketwatch.add(tickerMap[id]);
-                }
-              });
-              setState(() {
-                marketwatch = marketwatch;
-              });
-              positionsapi();
-            } else {
-              takeName();
+          if (response != null) {
+            _refreshController.refreshCompleted();
+            if (response.accounts != null) {
+              if (response.accounts.length > 0) {
+                prefs.setString("name", response.accounts[0].name);
+                amount = double.parse(response.accounts[0].amount);
+                marketwatch.clear();
+                response.accounts[0].watchlist.split(",").forEach((id) {
+                  if (tickerMap[id] != null) {
+                    marketwatch.add(tickerMap[id]);
+                  }
+                });
+                setState(() {
+                  marketwatch = marketwatch;
+                });
+                positionsapi();
+              } else {
+                takeName();
+              }
             }
-          }
-          if (response.meta != null && response.meta.messageType == "1") {
-            oneButtonDialog(context, "", response.meta.message,
-                !(response.meta.status == STATUS_403));
+            if (response.meta != null && response.meta.messageType == "1") {
+              oneButtonDialog(context, "", response.meta.message,
+                  !(response.meta.status == STATUS_403));
+            }
+          } else {
+            new Timer(const Duration(milliseconds: retry), () {
+              setState(() {
+                accountsapi();
+              });
+            });
           }
         });
       }
@@ -124,16 +133,16 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
                             });
                           } else {
                             Future<bool> load = add(
-                              API.ACCOUNT,
-                              Map.from({
-                                "user_id": userID,
-                                "name": name.text,
-                              }),
-                              1
-                            );
+                                API.ACCOUNT,
+                                Map.from({
+                                  "user_id": userID,
+                                  "name": name.text,
+                                }));
                             load.then((onValue) {
-                              prefs.setString("name", name.text);
-                              Navigator.of(context).pop();
+                              if (onValue != null) {
+                                prefs.setString("name", name.text);
+                                Navigator.of(context).pop();
+                              }
                             });
                           }
                         });
@@ -156,26 +165,34 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
           }
         });
       } else {
-        Future<Positions> data = getPositions({"user_id": userID}, 1);
+        Future<Positions> data = getPositions({"user_id": userID});
         data.then((response) {
-          if (response.positions != null) {
-            positionsMap.clear();
-            positions.clear();
-            if (response.positions.length > 0) {
-              response.positions.forEach((position) {
-                positionsMap[position.ticker] = position;
-                positions.add(position);
+          if (response != null) {
+            if (response.positions != null) {
+              positionsMap.clear();
+              positions.clear();
+              if (response.positions.length > 0) {
+                response.positions.forEach((position) {
+                  positionsMap[position.ticker] = position;
+                  positions.add(position);
+                });
+              }
+              setState(() {
+                positionsMap = positionsMap;
+                positions = positions;
               });
+              fillData();
             }
-            setState(() {
-              positionsMap = positionsMap;
-              positions = positions;
+            if (response.meta != null && response.meta.messageType == "1") {
+              oneButtonDialog(context, "", response.meta.message,
+                  !(response.meta.status == STATUS_403));
+            }
+          } else {
+            new Timer(const Duration(milliseconds: retry), () {
+              setState(() {
+                positionsapi();
+              });
             });
-            fillData();
-          }
-          if (response.meta != null && response.meta.messageType == "1") {
-            oneButtonDialog(context, "", response.meta.message,
-                !(response.meta.status == STATUS_403));
           }
         });
       }

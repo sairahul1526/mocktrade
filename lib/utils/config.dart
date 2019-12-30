@@ -17,12 +17,9 @@ String userID = "";
 
 double amount = 0;
 
-bool holiday = false;
-DateTime open = DateTime.now();
-DateTime close = DateTime.now();
-
 class API {
-  static const URL = "mocktrade1.ap-south-1.elasticbeanstalk.com";
+  static const URL =
+      "localhost:5000"; //"mocktrade1.ap-south-1.elasticbeanstalk.com";
   static const ACCOUNT = "account";
   static const AMOUNT = "amount";
   static const BUYSELL = "buysell";
@@ -53,6 +50,7 @@ Map<String, String> headers = {
 };
 
 const timeout = 10;
+const retry = 3000;
 
 const defaultLimit = "25";
 const defaultOffset = "0";

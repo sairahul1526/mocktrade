@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'package:mocktrade/utils/api.dart';
 import 'dart:convert';
 import 'dart:io' show Platform;
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
@@ -62,58 +61,7 @@ class _MyHomePageState extends State<MyHomePage> {
         headers["apikey"] = APIKEY.IOS_TEST;
       }
     }
-    timingsapi();
-  }
-
-  void timingsapi() {
-    checkInternet().then((internet) {
-      if (internet == null || !internet) {
-        Future<bool> dialog =
-            retryDialog(context, "No Internet connection", "");
-        dialog.then((onValue) {
-          if (onValue) {
-            timingsapi();
-          }
-        });
-      } else {
-        Future<Timings> data =
-            getTimings({"day": DateTime.now().weekday.toString()}, 1);
-        print(data);
-        data.then((response) {
-          print("response");
-          print(response);
-          if (response.timings != null && response.timings.length > 0) {
-            holiday = response.timings[0].holiday == "1";
-            List<String> opening = response.timings[0].open.split(":");
-            List<String> closing = response.timings[0].close.split(":");
-            open = new DateTime(
-                DateTime.now().year,
-                DateTime.now().month,
-                DateTime.now().day,
-                int.parse(opening[0]),
-                int.parse(opening[1]),
-                0,
-                0,
-                0);
-            close = new DateTime(
-                DateTime.now().year,
-                DateTime.now().month,
-                DateTime.now().day,
-                int.parse(closing[0]),
-                int.parse(closing[1]),
-                0,
-                0,
-                0);
-
-            tickers();
-          }
-          if (response.meta != null && response.meta.messageType == "1") {
-            oneButtonDialog(context, "", response.meta.message,
-                !(response.meta.status == STATUS_403));
-          }
-        });
-      }
-    });
+    tickers();
   }
 
   void tickers() {

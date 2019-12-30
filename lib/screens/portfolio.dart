@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:web_socket_channel/io.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
+import 'dart:async';
 
 import './buysell.dart';
 import '../utils/config.dart';
@@ -48,19 +49,27 @@ class PortfolioActivityState extends State<PortfolioActivity>
           }
         });
       } else {
-        Future<Accounts> data = getAccounts({"user_id": userID}, 1);
+        Future<Accounts> data = getAccounts({"user_id": userID});
         data.then((response) {
-          if (response.accounts != null) {
-            if (response.accounts.length > 0) {
-              setState(() {
-                amount = double.parse(response.accounts[0].amount);
-              });
+          if (response != null) {
+            if (response.accounts != null) {
+              if (response.accounts.length > 0) {
+                setState(() {
+                  amount = double.parse(response.accounts[0].amount);
+                });
+              }
+              positionsapi();
             }
-            positionsapi();
-          }
-          if (response.meta != null && response.meta.messageType == "1") {
-            oneButtonDialog(context, "", response.meta.message,
-                !(response.meta.status == STATUS_403));
+            if (response.meta != null && response.meta.messageType == "1") {
+              oneButtonDialog(context, "", response.meta.message,
+                  !(response.meta.status == STATUS_403));
+            }
+          } else {
+              new Timer(const Duration(milliseconds: retry), () {
+                setState(() {
+                  accountsapi();
+                });
+              });
           }
         });
       }
@@ -78,27 +87,35 @@ class PortfolioActivityState extends State<PortfolioActivity>
         });
         _refreshController.refreshCompleted();
       } else {
-        Future<Positions> data = getPositions({"user_id": userID}, 1);
+        Future<Positions> data = getPositions({"user_id": userID});
         data.then((response) {
+          if (response != null) {
             _refreshController.refreshCompleted();
-          if (response.positions != null) {
-            positionsMap.clear();
-            positions.clear();
-            if (response.positions.length > 0) {
-              response.positions.forEach((position) {
-                positionsMap[position.ticker] = position;
-                positions.add(position);
+            if (response.positions != null) {
+              positionsMap.clear();
+              positions.clear();
+              if (response.positions.length > 0) {
+                response.positions.forEach((position) {
+                  positionsMap[position.ticker] = position;
+                  positions.add(position);
+                });
+              }
+              setState(() {
+                positionsMap = positionsMap;
+                positions = positions;
               });
+              fillData();
             }
-            setState(() {
-              positionsMap = positionsMap;
-              positions = positions;
+            if (response.meta != null && response.meta.messageType == "1") {
+              oneButtonDialog(context, "", response.meta.message,
+                  !(response.meta.status == STATUS_403));
+            }
+          } else {
+            new Timer(const Duration(milliseconds: retry), () {
+              setState(() {
+                positionsapi();
+              });
             });
-            fillData();
-          }
-          if (response.meta != null && response.meta.messageType == "1") {
-            oneButtonDialog(context, "", response.meta.message,
-                !(response.meta.status == STATUS_403));
           }
         });
       }

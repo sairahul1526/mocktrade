@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'dart:io';
 
 import './models.dart';
 import './config.dart';
@@ -9,7 +8,7 @@ import './utils.dart';
 
 // account
 
-Future<Accounts> getAccounts(Map<String, String> query, int count) async {
+Future<Accounts> getAccounts(Map<String, String> query) async {
   try {
     final response = await http
         .get(Uri.http(API.URL, API.ACCOUNT, query), headers: headers)
@@ -17,14 +16,13 @@ Future<Accounts> getAccounts(Map<String, String> query, int count) async {
 
     return Accounts.fromJson(json.decode(response.body));
   } catch (e) {
-    sleep(new Duration(seconds: 2 * count));
-    return getAccounts(query, count + 1);
+    return null;
   }
 }
 
 // amount
 
-Future<Amounts> getAmounts(Map<String, String> query, int count) async {
+Future<Amounts> getAmounts(Map<String, String> query) async {
   if (prefs != null) {
     for (var i = 1; i < 30; i++) {
       prefs.setString(
@@ -57,14 +55,13 @@ Future<Amounts> getAmounts(Map<String, String> query, int count) async {
     }
     return Amounts.fromJson(json.decode(response.body));
   } catch (e) {
-    sleep(new Duration(seconds: 2 * count));
-    return getAmounts(query, count + 1);
+    return null;
   }
 }
 
 // login
 
-Future<Logins> getLogins(Map<String, String> query, int count) async {
+Future<Logins> getLogins(Map<String, String> query) async {
   try {
     final response = await http
         .get(Uri.http(API.URL, API.LOGIN, query), headers: headers)
@@ -72,14 +69,13 @@ Future<Logins> getLogins(Map<String, String> query, int count) async {
 
     return Logins.fromJson(json.decode(response.body));
   } catch (e) {
-    sleep(new Duration(seconds: 2 * count));
-    return getLogins(query, count + 1);
+    return null;
   }
 }
 
 // timing
 
-Future<Timings> getTimings(Map<String, String> query, int count) async {
+Future<Timings> getTimings(Map<String, String> query) async {
   try {
     final response = await http
         .get(Uri.http(API.URL, API.TIMING, query), headers: headers)
@@ -87,14 +83,13 @@ Future<Timings> getTimings(Map<String, String> query, int count) async {
 
     return Timings.fromJson(json.decode(response.body));
   } catch (e) {
-    sleep(new Duration(seconds: 2 * count));
-    return getTimings(query, count + 1);
+    return null;
   }
 }
 
 // token
 
-Future<Tokens> getTokens(Map<String, String> query, int count) async {
+Future<Tokens> getTokens(Map<String, String> query) async {
   try {
     final response = await http
         .get(Uri.http(API.URL, API.TOKEN, query), headers: headers)
@@ -102,14 +97,13 @@ Future<Tokens> getTokens(Map<String, String> query, int count) async {
 
     return Tokens.fromJson(json.decode(response.body));
   } catch (e) {
-    sleep(new Duration(seconds: 2 * count));
-    return getTokens(query, count + 1);
+    return null;
   }
 }
 
 // order
 
-Future<Orders> getOrders(Map<String, String> query, int count) async {
+Future<Orders> getOrders(Map<String, String> query) async {
   try {
     final response = await http
         .get(Uri.http(API.URL, API.ORDER, query), headers: headers)
@@ -117,14 +111,13 @@ Future<Orders> getOrders(Map<String, String> query, int count) async {
 
     return Orders.fromJson(json.decode(response.body));
   } catch (e) {
-    sleep(new Duration(seconds: 2 * count));
-    return getOrders(query, count + 1);
+    return null;
   }
 }
 
 // postion
 
-Future<Positions> getPositions(Map<String, String> query, int count) async {
+Future<Positions> getPositions(Map<String, String> query) async {
   try {
     final response = await http
         .get(Uri.http(API.URL, API.POSITIONS, query), headers: headers)
@@ -132,13 +125,12 @@ Future<Positions> getPositions(Map<String, String> query, int count) async {
 
     return Positions.fromJson(json.decode(response.body));
   } catch (e) {
-    sleep(new Duration(seconds: 2 * count));
-    return getPositions(query, count + 1);
+    return null;
   }
 }
 
 // add and update
-Future<bool> add(String endpoint, Map<String, String> body, int count) async {
+Future<bool> add(String endpoint, Map<String, String> body) async {
   if (body["status"] != null) {
     body["status"] = "1";
   }
@@ -159,14 +151,13 @@ Future<bool> add(String endpoint, Map<String, String> body, int count) async {
     }
     return false;
   } catch (e) {
-    sleep(new Duration(seconds: 2 * count));
-    return add(endpoint, body, count + 1);
+    return null;
   }
 }
 
 // add and update
 Future<dynamic> addGetResponse(
-    String endpoint, Map<String, String> body, int count) async {
+    String endpoint, Map<String, String> body) async {
   if (body["status"] != null) {
     body["status"] = "1";
   }
@@ -188,13 +179,12 @@ Future<dynamic> addGetResponse(
     }
     return null;
   } catch (e) {
-    sleep(new Duration(seconds: 2 * count));
-    return addGetResponse(endpoint, body, count + 1);
+    return null;
   }
 }
 
 Future<bool> update(String endpoint, Map<String, String> body,
-    Map<String, String> query, int count) async {
+    Map<String, String> query) async {
   var request = new http.MultipartRequest(
     "PUT",
     Uri.http(API.URL, endpoint, query),
@@ -209,13 +199,11 @@ Future<bool> update(String endpoint, Map<String, String> body,
     }
     return false;
   } catch (e) {
-    sleep(new Duration(seconds: 2 * count));
-    return update(endpoint, body, query, count + 1);
+    return null;
   }
 }
 
-Future<bool> delete(
-    String endpoint, Map<String, String> query, int count) async {
+Future<bool> delete(String endpoint, Map<String, String> query) async {
   var request = new http.MultipartRequest(
     "DELETE",
     Uri.http(API.URL, endpoint, query),
@@ -230,7 +218,6 @@ Future<bool> delete(
     }
     return false;
   } catch (e) {
-    sleep(new Duration(seconds: 2 * count));
-    return delete(endpoint, query, count + 1);
+    return null;
   }
 }

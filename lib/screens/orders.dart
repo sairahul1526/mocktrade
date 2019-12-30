@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mocktrade/utils/api.dart';
 import 'package:modal_progress_hud/modal_progress_hud.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
+import 'dart:async';
 
 import '../utils/config.dart';
 import '../utils/utils.dart';
@@ -86,30 +87,39 @@ class OrdersActivityState extends State<OrdersActivity>
           "sortby": "desc",
           "status": "1",
           "today": "true",
-        }, 1);
+        });
         data.then((response) {
           _refreshController.refreshCompleted();
-          if (response.orders != null && response.orders.length > 0) {
-            offset =
-                (int.parse(response.pagination.offset) + response.orders.length)
-                    .toString();
-            response.orders.forEach((order) {
-              orders.add(order);
-            });
+          if (response != null) {
+            if (response.orders != null && response.orders.length > 0) {
+              offset = (int.parse(response.pagination.offset) +
+                      response.orders.length)
+                  .toString();
+              response.orders.forEach((order) {
+                orders.add(order);
+              });
+              setState(() {
+                orders = orders;
+              });
+            } else {
+              end = true;
+            }
+            if (response.meta != null && response.meta.messageType == "1") {
+              oneButtonDialog(context, "", response.meta.message,
+                  !(response.meta.status == STATUS_403));
+            }
+
             setState(() {
-              orders = orders;
+              ongoing = false;
+              loading = false;
             });
           } else {
-            end = true;
+            new Timer(const Duration(milliseconds: retry), () {
+              setState(() {
+                ordersapi();
+              });
+            });
           }
-          if (response.meta != null && response.meta.messageType == "1") {
-            oneButtonDialog(context, "", response.meta.message,
-                !(response.meta.status == STATUS_403));
-          }
-          setState(() {
-            ongoing = false;
-            loading = false;
-          });
         });
       }
     });

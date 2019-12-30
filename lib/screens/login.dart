@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_webview_plugin/flutter_webview_plugin.dart';
 import 'package:mocktrade/utils/api.dart';
+import 'dart:async';
 
 import './dashboard.dart';
 import '../utils/utils.dart';
@@ -20,26 +21,48 @@ class LoginActivityState extends State<LoginActivity> {
   void initState() {
     super.initState();
 
-    getLogins({}, 1).then((response) {
-      setState(() {
-        selectedUrl = response.logins[0].url;
-      });
-      print(selectedUrl);
-    });
-
+    getloginsapi();
     final flutterWebviewPlugin = new FlutterWebviewPlugin();
 
     flutterWebviewPlugin.onUrlChanged.listen((String url) {
       String token = Uri.parse(url).queryParameters["request_token"];
       if (token != null && token.length > 0) {
-        getTokens({"tok": token}, 1).then((response) {
-          accessToken = response.tokens[0].token;
-          prefs.setString("accessToken", accessToken);
-          userID = response.tokens[0].userID;
-          prefs.setString("userID", userID);
+        gettokensapi(token);
+      }
+    });
+  }
 
-          Navigator.of(context).pushReplacement(new MaterialPageRoute(
-              builder: (BuildContext context) => new DashboardActivity()));
+  void gettokensapi(String token) {
+    getTokens({"tok": token}).then((response) {
+      if (response != null) {
+        accessToken = response.tokens[0].token;
+        prefs.setString("accessToken", accessToken);
+        userID = response.tokens[0].userID;
+        prefs.setString("userID", userID);
+
+        Navigator.of(context).pushReplacement(new MaterialPageRoute(
+            builder: (BuildContext context) => new DashboardActivity()));
+      } else {
+        new Timer(const Duration(milliseconds: retry), () {
+          setState(() {
+            gettokensapi(token);
+          });
+        });
+      }
+    });
+  }
+
+  void getloginsapi() {
+    getLogins({}).then((response) {
+      if (response != null) {
+        setState(() {
+          selectedUrl = response.logins[0].url;
+        });
+      } else {
+        new Timer(const Duration(milliseconds: retry), () {
+          setState(() {
+            getloginsapi();
+          });
         });
       }
     });

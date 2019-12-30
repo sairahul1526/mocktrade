@@ -4,6 +4,7 @@ import 'package:mocktrade/utils/models.dart';
 import 'package:modal_progress_hud/modal_progress_hud.dart';
 import 'package:charts_flutter/flutter.dart' as charty;
 import 'package:intl/intl.dart';
+import 'dart:async';
 
 import '../utils/config.dart';
 import '../utils/utils.dart';
@@ -56,20 +57,28 @@ class PerformanceActivityState extends State<PerformanceActivity> {
               dateFormat.format(new DateTime.now()),
           "orderby": "date",
           "sortby": "desc",
-        }, 1);
+        });
         data.then((response) {
-          setState(() {
-            loading = false;
-          });
-          if (response.amounts != null) {
-            if (response.amounts.length > 0) {
-              this.amounts = response.amounts;
-              parseAmounts(365);
+          if (response != null) {
+            setState(() {
+              loading = false;
+            });
+            if (response.amounts != null) {
+              if (response.amounts.length > 0) {
+                this.amounts = response.amounts;
+                parseAmounts(365);
+              }
             }
-          }
-          if (response.meta != null && response.meta.messageType == "1") {
-            oneButtonDialog(context, "", response.meta.message,
-                !(response.meta.status == STATUS_403));
+            if (response.meta != null && response.meta.messageType == "1") {
+              oneButtonDialog(context, "", response.meta.message,
+                  !(response.meta.status == STATUS_403));
+            }
+          } else {
+            new Timer(const Duration(milliseconds: retry), () {
+              setState(() {
+                amountsapi();
+              });
+            });
           }
         });
       }
