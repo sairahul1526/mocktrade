@@ -18,8 +18,7 @@ String userID = "";
 double amount = 0;
 
 class API {
-  static const URL =
-      "localhost:5000"; //"mocktrade1.ap-south-1.elasticbeanstalk.com";
+  static const URL = "mocktrade1.ap-south-1.elasticbeanstalk.com";
   static const ACCOUNT = "account";
   static const AMOUNT = "amount";
   static const BUYSELL = "buysell";

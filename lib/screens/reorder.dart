@@ -32,7 +32,7 @@ class ReordersActivityState extends State<ReordersActivity>
     super.initState();
 
     marketwatch.forEach((watch) {
-      reordermarketwatch = marketwatch;
+      reordermarketwatch.add(watch);
     });
   }
 
@@ -65,8 +65,7 @@ class ReordersActivityState extends State<ReordersActivity>
                               loading = true;
                             });
                             List<int> tickers = new List();
-                            marketwatch = reordermarketwatch;
-                            marketwatch.forEach((watch) {
+                            reordermarketwatch.forEach((watch) {
                               tickers.add(int.parse(watch.instrumentToken));
                             });
                             checkInternet().then((internet) {
@@ -88,6 +87,10 @@ class ReordersActivityState extends State<ReordersActivity>
                                     loading = false;
                                   });
                                   if (onValue != null) {
+                                    marketwatch.clear();
+                                    reordermarketwatch.forEach((watch) {
+                                      marketwatch.add(watch);
+                                    });
                                     Navigator.pop(context, "Marketwatch saved");
                                   }
                                 });
@@ -126,6 +129,7 @@ class ReordersActivityState extends State<ReordersActivity>
                                     width: width,
                                     padding: EdgeInsets.fromLTRB(0, 10, 0, 10),
                                     child: new Column(
+                                      mainAxisSize: MainAxisSize.min,
                                       children: <Widget>[
                                         new Row(
                                           mainAxisAlignment:
