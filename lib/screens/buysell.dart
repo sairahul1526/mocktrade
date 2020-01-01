@@ -344,8 +344,8 @@ class BuySellActivityState extends State<BuySellActivity> {
               if (snapshot.hasData) {
                 splitdata(snapshot.data);
                 if (requiredAmount.length == 0 && lastTradedPrice != null) {
-                  requiredAmount =
-                      (lastTradedPrice * int.parse(shares.text)).toString();
+                  requiredAmount = (lastTradedPrice * int.parse(shares.text))
+                      .toStringAsFixed(2);
                 }
               }
               return new ListView(
