@@ -168,7 +168,7 @@ class AccountActivityState extends State<AccountActivity> {
                     sendMail(
                         supportEmail,
                         (Platform.isAndroid ? "Android" : "iOS") +
-                            " Bug Report",
+                            "%20Bug%20Report",
                         "\n\n\nVersion: " +
                             headers["appversion"] +
                             ", User: " +
@@ -191,7 +191,7 @@ class AccountActivityState extends State<AccountActivity> {
                   onTap: () {
                     sendMail(
                         supportEmail,
-                        (Platform.isAndroid ? "Android" : "iOS") + " Support",
+                        (Platform.isAndroid ? "Android" : "iOS") + "%20Support",
                         "\n\n\nVersion: " +
                             headers["appversion"] +
                             ", User: " +
