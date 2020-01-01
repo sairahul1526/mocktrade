@@ -117,9 +117,7 @@ class AccountActivityState extends State<AccountActivity> {
                 new Divider(),
                 new GestureDetector(
                   onTap: () {
-                    launchURL("mailto:" +
-                        supportEmail +
-                        "?subject=MockTrade Support");
+                    sendMail(supportEmail, "MockTrade", "");
                   },
                   child: new Container(
                     color: Colors.transparent,

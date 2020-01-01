@@ -29,7 +29,13 @@ class HexColor extends Color {
   HexColor(final String hexColor) : super(_getColorFromHex(hexColor));
 }
 
-void launchURL(String url) async {
+void sendMail(String mail, String subject, String body) async {
+  var url = 'mailto:' +
+      mail +
+      "?subject=" +
+      subject +
+      "&body=" +
+      Uri.encodeComponent(body);
   if (await canLaunch(url)) {
     await launch(url);
   }
