@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:mocktrade/screens/funds.dart';
 import 'package:mocktrade/screens/history.dart';
 import 'package:mocktrade/screens/performance.dart';
+import 'package:share/share.dart';
+import 'package:launch_review/launch_review.dart';
+import 'dart:io' show Platform;
 
 import '../main.dart';
 import '../utils/config.dart';
@@ -46,11 +49,23 @@ class AccountActivityState extends State<AccountActivity> {
         child: new SafeArea(
           child: new Container(
             padding: EdgeInsets.all(20),
-            child: new Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: new ListView(
               children: <Widget>[
                 new Container(
                   height: 20,
+                ),
+                new Container(
+                  color: Colors.transparent,
+                  padding: EdgeInsets.all(15),
+                  child: new Text(
+                    prefs.getString("name"),
+                    style: TextStyle(
+                      letterSpacing: 2,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.black,
+                      fontSize: 25,
+                    ),
+                  ),
                 ),
                 new GestureDetector(
                   onTap: () {
@@ -114,10 +129,73 @@ class AccountActivityState extends State<AccountActivity> {
                     ),
                   ),
                 ),
+                new Container(
+                  height: 50,
+                ),
+                new Container(
+                  color: Colors.transparent,
+                  padding: EdgeInsets.all(15),
+                  child: new Text(
+                    "Mock Trade",
+                    style: TextStyle(
+                      letterSpacing: 2,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.black,
+                      fontSize: 25,
+                    ),
+                  ),
+                ),
+                new GestureDetector(
+                  onTap: () {
+                    Share.share('check out my website https://example.com',
+                        subject: 'Look what I made!');
+                  },
+                  child: new Container(
+                    color: Colors.transparent,
+                    padding: EdgeInsets.all(15),
+                    child: new Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: <Widget>[
+                        new Text("Invite Friends"),
+                        new Icon(Icons.person_add)
+                      ],
+                    ),
+                  ),
+                ),
                 new Divider(),
                 new GestureDetector(
                   onTap: () {
-                    sendMail(supportEmail, "MockTrade", "");
+                    sendMail(
+                        supportEmail,
+                        (Platform.isAndroid ? "Android" : "iOS") +
+                            " Bug Report",
+                        "\n\n\nVersion: " +
+                            headers["appversion"] +
+                            ", User: " +
+                            userID);
+                  },
+                  child: new Container(
+                    color: Colors.transparent,
+                    padding: EdgeInsets.all(15),
+                    child: new Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: <Widget>[
+                        new Text("Report a Bug"),
+                        new Icon(Icons.bug_report)
+                      ],
+                    ),
+                  ),
+                ),
+                new Divider(),
+                new GestureDetector(
+                  onTap: () {
+                    sendMail(
+                        supportEmail,
+                        (Platform.isAndroid ? "Android" : "iOS") + " Support",
+                        "\n\n\nVersion: " +
+                            headers["appversion"] +
+                            ", User: " +
+                            userID);
                   },
                   child: new Container(
                     color: Colors.transparent,
@@ -132,6 +210,27 @@ class AccountActivityState extends State<AccountActivity> {
                   ),
                 ),
                 new Divider(),
+                new GestureDetector(
+                  onTap: () {
+                    LaunchReview.launch(
+                        androidAppId: "com.saikrishna.mocktrade",
+                        iOSAppId: "585027354");
+                  },
+                  child: new Container(
+                    color: Colors.transparent,
+                    padding: EdgeInsets.all(15),
+                    child: new Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: <Widget>[
+                        new Text("Rate Us"),
+                        new Icon(Icons.star)
+                      ],
+                    ),
+                  ),
+                ),
+                new Container(
+                  height: 100,
+                ),
                 new GestureDetector(
                   onTap: () {
                     prefs.clear();
@@ -153,7 +252,16 @@ class AccountActivityState extends State<AccountActivity> {
                     ),
                   ),
                 ),
-                new Divider(),
+                new Container(
+                  child: new Center(
+                    child: new Text(
+                      "\n\n\nVersion: " +
+                          headers["appversion"] +
+                          ", User: " +
+                          userID,
+                    ),
+                  ),
+                )
               ],
             ),
           ),
