@@ -4,12 +4,9 @@ import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:io';
 import 'dart:convert';
-import 'package:hex/hex.dart';
-import 'package:convert_hex/convert_hex.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:http/http.dart' as http;
-import './config.dart';
 
 DateFormat headingDateFormat = new DateFormat("h:mm a EEE, MMM d, ''yy");
 DateFormat nameFormat = new DateFormat("d MMM yy");
@@ -39,37 +36,6 @@ void sendMail(String mail, String subject, String body) async {
   if (await canLaunch(url)) {
     await launch(url);
   }
-}
-
-int converttoint(Iterable<int> data) {
-  return Hex.decode(HEX.encode(data.toList()));
-}
-
-Future<String> getTickers() async {
-  if (prefs != null) {
-    for (var i = 1; i < 30; i++) {
-      prefs.setString(
-          dateFormat.format(DateTime.now().add(new Duration(days: -i))) +
-              "_tickers",
-          "");
-    }
-    String resp =
-        prefs.getString(dateFormat.format(DateTime.now()) + "_tickers");
-    if (resp != null && resp.length > 0) {
-      return resp;
-    }
-  }
-  final response =
-      await http.get("https://api.kite.trade/instruments", headers: {
-    "X-Kite-Version": "3",
-    "Authorization": "token " + apiKey + ":" + accessToken + ""
-  });
-
-  if (response.statusCode == 200) {
-    prefs.setString(
-        dateFormat.format(DateTime.now()) + "_tickers", response.body);
-  }
-  return response.body;
 }
 
 SharedPreferences prefs;
@@ -143,29 +109,13 @@ Future<bool> retryDialog(
   return returned;
 }
 
-Future<bool> checkAccessToken() async {
-  final response =
-      await http.get("https://api.kite.trade/quote/ltp?i=NSE:INFY", headers: {
-    "X-Kite-Version": "3",
-    "Authorization": "token " + apiKey + ":" + accessToken + ""
-  });
-
-  return response.statusCode == 200;
-}
-
-Future<dynamic> fillDataAPI(String url, List<String> ticks) async {
-  bool init = true;
-  for (var tick in ticks) {
-    if (!init) {
-      url += "&";
-    }
-    url += "i=" + tick;
-    init = false;
-  }
-  final response = await http.get(url, headers: {
-    "X-Kite-Version": "3",
-    "Authorization": "token " + apiKey + ":" + accessToken + ""
-  });
+Future<dynamic> getHistoricalData() async {
+  final response = await http.get(
+      "https://kite.zerodha.com/oms/instruments/historical/260105/5minute?user_id=ZB2718&oi=1&from=2020-01-06&to=2020-01-06&ciqrandom=1578332136095",
+      headers: {
+        "Authorization":
+            "enctoken Wx/wvMxglkruvWLLdysAOo/R821bfhYJrwgzQ3ZfBbZMm83rdq0hw94tITN6TKc28nSOBeQw9m6mH0DI5Q+kuNz/gbc85A=="
+      });
 
   return json.decode(response.body);
 }

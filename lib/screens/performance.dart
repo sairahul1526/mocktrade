@@ -256,7 +256,6 @@ class PerformanceActivityState extends State<PerformanceActivity> {
   }
 }
 
-/// Sample time series data type.
 class TimeSeriesSales {
   final DateTime time;
   final int sales;

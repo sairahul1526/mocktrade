@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:mocktrade/utils/api.dart';
 import 'package:modal_progress_hud/modal_progress_hud.dart';
 import 'package:slider_button/slider_button.dart';
-import 'package:web_socket_channel/io.dart';
-import 'dart:convert';
 import 'dart:async';
 
 import './alert.dart';
@@ -51,9 +49,6 @@ class BuySellActivityState extends State<BuySellActivity> {
 
   final globalKey = GlobalKey<ScaffoldState>();
 
-  IOWebSocketChannel channel = IOWebSocketChannel.connect(
-      "wss://ws.kite.trade?api_key=" + apiKey + "&access_token=" + accessToken);
-
   Widget buyselbutton;
 
   BuySellActivityState(this.id, this.symbol, this.sell);
@@ -61,34 +56,8 @@ class BuySellActivityState extends State<BuySellActivity> {
   void initState() {
     super.initState();
 
+    closePrice = closes[id];
     accountsapi();
-
-    List<String> ids = new List();
-
-    marketwatch.forEach((f) => ids.add(f.instrumentToken));
-    fillDataAPI("https://api.kite.trade/quote?", [id]).then((resp) {
-      if (resp["data"][id] != null) {
-        lastTradedPrice = resp["data"][id]["last_price"].toDouble();
-        lastTradedQuantity = resp["data"][id]["last_quantity"].toDouble();
-        averageTradedPrice = resp["data"][id]["average_price"].toDouble();
-        volumeTraded = resp["data"][id]["volume"].toDouble();
-        totalBuyQuantity = resp["data"][id]["buy_quantity"].toDouble();
-        totalSellQuantity = resp["data"][id]["sell_quantity"].toDouble();
-        openPrice = resp["data"][id]["ohlc"]["open"].toDouble();
-        highPrice = resp["data"][id]["ohlc"]["high"].toDouble();
-        lowPrice = resp["data"][id]["ohlc"]["low"].toDouble();
-        closePrice = resp["data"][id]["ohlc"]["close"].toDouble();
-      }
-      shares.text = tickerMap[id].lotSize;
-      Map<String, dynamic> message = {
-        "a": "mode",
-        "v": [
-          "quote",
-          [int.parse(id)]
-        ]
-      };
-      channel.sink.add(jsonEncode(message));
-    });
   }
 
   void accountsapi() {
@@ -126,21 +95,15 @@ class BuySellActivityState extends State<BuySellActivity> {
     });
   }
 
-  void splitdata(List<int> data) {
-    if (data.length < 2) {
-      return;
-    }
+  void splitdata(Map<String, double> data) {
+    if (data[id] != null) {
+      lastTradedPrice = data[id];
 
-    lastTradedPrice = converttoint(data.getRange(8, 12)).toDouble() / 100;
-    lastTradedQuantity = converttoint(data.getRange(12, 16)).toDouble();
-    averageTradedPrice = converttoint(data.getRange(16, 20)).toDouble() / 100;
-    volumeTraded = converttoint(data.getRange(20, 24)).toDouble();
-    totalBuyQuantity = converttoint(data.getRange(24, 28)).toDouble();
-    totalSellQuantity = converttoint(data.getRange(28, 32)).toDouble();
-    openPrice = converttoint(data.getRange(32, 36)).toDouble() / 100;
-    highPrice = converttoint(data.getRange(36, 40)).toDouble() / 100;
-    lowPrice = converttoint(data.getRange(40, 44)).toDouble() / 100;
-    closePrice = converttoint(data.getRange(44, 48)).toDouble() / 100;
+      if (shares.text != null && shares.text.length > 0) {
+        requiredAmount =
+            (lastTradedPrice * int.parse(shares.text)).toStringAsFixed(2);
+      }
+    }
   }
 
   void closeActivity(String title, String subtitle, bool success) {
@@ -166,7 +129,8 @@ class BuySellActivityState extends State<BuySellActivity> {
                 shares.text != "0" &&
                 lastTradedPrice != null &&
                 lastTradedPrice != 0) {
-              if (int.parse(shares.text) % int.parse(tickerMap[id].lotSize) !=
+              if (int.parse(shares.text) %
+                      double.parse(tickerMap[id].lotSize) !=
                   0) {
                 closeActivity("Rejected",
                     "Quantity has to be multiple of lot size.", false);
@@ -339,14 +303,10 @@ class BuySellActivityState extends State<BuySellActivity> {
         child: new Container(
           padding: EdgeInsets.all(15),
           child: new StreamBuilder(
-            stream: channel.stream,
+            stream: streamController.stream,
             builder: (context, snapshot) {
               if (snapshot.hasData) {
                 splitdata(snapshot.data);
-                if (requiredAmount.length == 0 && lastTradedPrice != null) {
-                  requiredAmount = (lastTradedPrice * int.parse(shares.text))
-                      .toStringAsFixed(2);
-                }
               }
               return new ListView(
                 // crossAxisAlignment: CrossAxisAlignment.start,
@@ -361,7 +321,7 @@ class BuySellActivityState extends State<BuySellActivity> {
                   new Container(
                     height: 8,
                   ),
-                  closePrice != null
+                  closePrice != null && lastTradedPrice != null
                       ? new Text(
                           lastTradedPrice.toStringAsFixed(2) +
                               "   " +

@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:mocktrade/screens/reorder.dart';
 import 'package:mocktrade/utils/api.dart';
 import 'package:mocktrade/utils/models.dart';
-import 'dart:convert';
 import 'package:web_socket_channel/io.dart';
 import 'package:pull_to_refresh/pull_to_refresh.dart';
 import 'dart:async';
+import "dart:math";
 
 import './buysell.dart';
 import './search.dart';
@@ -27,10 +27,11 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
 
   final GlobalKey<ScaffoldState> _scaffoldKey = new GlobalKey<ScaffoldState>();
 
-  IOWebSocketChannel channel = IOWebSocketChannel.connect(
-      "wss://ws.kite.trade?api_key=" + apiKey + "&access_token=" + accessToken);
-  Map<int, double> tickers = new Map();
-  Map<int, double> closes = new Map();
+  Map<String, double> tickers = new Map();
+
+  final random = new Random();
+
+  IOWebSocketChannel channel;
 
   RefreshController _refreshController =
       RefreshController(initialRefresh: false);
@@ -40,10 +41,62 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
     super.initState();
 
     accountsapi();
+    tickerlastapi();
+  }
+
+  void tickerlastapi() {
+    checkInternet().then((internet) {
+      if (internet == null || !internet) {
+        Future<bool> dialog =
+            retryDialog(context, "No Internet connection", "");
+        dialog.then((onValue) {
+          if (onValue) {
+            tickerlastapi();
+          }
+        });
+        _refreshController.refreshCompleted();
+      } else {
+        Future<TickerLasts> data = getTickerClose({});
+        data.then((response) {
+          if (response != null) {
+            if (response.tickerLasts != null &&
+                response.tickerLasts.length > 0) {
+              response.tickerLasts.forEach((d) {
+                List<String> temp = d.value.split(":");
+                // print(temp);
+                if (temp.length > 1) {
+                  // if (tickers[d.key] == null) {
+                  //   tickers[d.key] = double.parse(temp[0]);
+                  // }
+                  closes[d.key] = double.parse(temp[1]);
+                }
+              });
+            } else {
+              new Timer(const Duration(milliseconds: retry), () {
+                setState(() {
+                  tickerlastapi();
+                });
+              });
+            }
+            if (response.meta != null && response.meta.messageType == "1") {
+              oneButtonDialog(context, "", response.meta.message,
+                  !(response.meta.status == STATUS_403));
+            }
+          } else {
+            new Timer(const Duration(milliseconds: retry), () {
+              setState(() {
+                tickerlastapi();
+              });
+            });
+          }
+        });
+      }
+    });
   }
 
   void _onRefresh() async {
     accountsapi();
+    tickerlastapi();
   }
 
   void accountsapi() {
@@ -64,7 +117,7 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
             _refreshController.refreshCompleted();
             if (response.accounts != null) {
               if (response.accounts.length > 0) {
-                prefs.setString("name", response.accounts[0].name);
+                prefs.setString("email", response.accounts[0].email);
                 amount = double.parse(response.accounts[0].amount);
                 marketwatch.clear();
                 response.accounts[0].watchlist.split(",").forEach((id) {
@@ -76,8 +129,6 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
                   marketwatch = marketwatch;
                 });
                 positionsapi();
-              } else {
-                takeName();
               }
             }
             if (response.meta != null && response.meta.messageType == "1") {
@@ -161,7 +212,11 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
             retryDialog(context, "No Internet connection", "");
         dialog.then((onValue) {
           if (onValue) {
-            takeName();
+            new Timer(const Duration(milliseconds: retry), () {
+              setState(() {
+                positionsapi();
+              });
+            });
           }
         });
       } else {
@@ -181,7 +236,7 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
                 positionsMap = positionsMap;
                 positions = positions;
               });
-              fillData();
+              getData();
             }
             if (response.meta != null && response.meta.messageType == "1") {
               oneButtonDialog(context, "", response.meta.message,
@@ -199,57 +254,53 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
     });
   }
 
-  void splitdata(List<int> data) {
-    if (data.length < 2) {
-      return;
-    }
-    int noPackets = converttoint(data.getRange(0, 2));
-
-    int j = 2;
-    int len = data.length;
-    for (var i = 0; i < noPackets; i++) {
-      if ((len >= (j + 2 + 44)) && converttoint(data.getRange(j, j + 2)) > 40) {
-        tickers[converttoint(data.getRange(j + 2, j + 2 + 4))] =
-            converttoint(data.getRange(j + 2 + 4, j + 2 + 8)).toDouble() / 100;
-        closes[converttoint(data.getRange(j + 2, j + 2 + 4))] =
-            converttoint(data.getRange(j + 2 + 40, j + 2 + 44)).toDouble() /
-                100;
-        j = j + 2 + 44;
-      } else if (len >= (j + 2 + 24)) {
-        tickers[converttoint(data.getRange(j + 2, j + 2 + 4))] =
-            converttoint(data.getRange(j + 2 + 4, j + 2 + 8)).toDouble() / 100;
-        closes[converttoint(data.getRange(j + 2, j + 2 + 4))] =
-            converttoint(data.getRange(j + 2 + 20, j + 2 + 24)).toDouble() /
-                100;
-        j = j + 2 + 24;
+  void splitdata(String data) {
+    List<String> stocks = data.split("#");
+    List<String> temp;
+    stocks.forEach((stock) {
+      temp = stock.split(":");
+      if (temp.length == 2) {
+        tickers[temp[0]] = double.parse(temp[1]);
       }
-    }
+    });
+    streamController.add(tickers);
   }
 
   getData() {
-    List<int> ids = new List();
-
-    marketwatch.forEach((f) => ids.add(int.parse(f.instrumentToken)));
-    Map<String, dynamic> message = {
-      "a": "mode",
-      "v": ["quote", ids]
-    };
-    channel.sink.add(jsonEncode(message));
-  }
-
-  fillData() {
-    List<String> ids = new List();
-
-    marketwatch.forEach((f) => ids.add(f.instrumentToken));
-    fillDataAPI("https://api.kite.trade/quote/ohlc?", ids).then((resp) {
-      for (var id in ids) {
-        if (resp["data"][id] != null) {
-          tickers[int.parse(id)] = resp["data"][id]["last_price"].toDouble();
-          closes[int.parse(id)] = resp["data"][id]["ohlc"]["close"].toDouble();
-        }
-      }
-      getData();
+    if (channel != null) {
+      channel.sink.close();
+    }
+    channel = null;
+    Map<String, bool> ids = new Map();
+    marketwatch.forEach((f) {
+      ids[f.instrumentToken] = true;
     });
+    positions.forEach((p) {
+      ids[p.ticker] = true;
+    });
+    if (ids.length > 0) {
+      channel = IOWebSocketChannel.connect(
+          "ws://" + API.URL + "/realtime?tickers=" + ids.keys.join(","));
+
+      channel.stream.listen(
+        (message) {
+          // print(message);
+          if (message != null && message != "1") {
+            channelStreamController.add(message);
+          }
+        },
+        onDone: () {
+          new Timer(Duration(seconds: random.nextInt(3)), () {
+            // getData();
+          });
+        },
+        onError: (error) {
+          new Timer(Duration(seconds: random.nextInt(3)), () {
+            getData();
+          });
+        },
+      );
+    }
   }
 
   searchPage(BuildContext context, Widget page) async {
@@ -263,7 +314,7 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
         duration: Duration(seconds: 3),
       ));
     }
-    fillData();
+    getData();
   }
 
   @override
@@ -320,7 +371,9 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
                           ),
                         ),
                         new Text(
-                          marketwatch.length.toString() + "/100",
+                          marketwatch.length.toString() +
+                              "/" +
+                              maxWatchList.toString(),
                           style: TextStyle(
                             color: Colors.grey,
                           ),
@@ -335,210 +388,206 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
                 new Container(
                   height: 20,
                 ),
-                new StreamBuilder(
-                  stream: channel.stream,
-                  builder: (context, snapshot) {
-                    if (snapshot.hasData && marketwatch.length > 0) {
-                      splitdata(snapshot.data);
-                    }
-                    return new Expanded(
-                      child: marketwatch.length == 0
-                          ? new SmartRefresher(
-                              onRefresh: _onRefresh,
-                              controller: _refreshController,
-                              child: new Center(
-                                  child: new Text(
-                                      "Use the search bar at the top to add some instruments")),
-                            )
-                          : new SmartRefresher(
-                              onRefresh: _onRefresh,
-                              controller: _refreshController,
-                              child: new ListView.separated(
-                                itemCount: marketwatch.length,
-                                separatorBuilder: (context, i) {
-                                  return marketwatch[i] == null
-                                      ? new Container()
-                                      : new Divider();
-                                },
-                                itemBuilder: (itemContext, i) {
-                                  return marketwatch[i] == null
-                                      ? new Container()
-                                      : new GestureDetector(
-                                          onLongPress: () {
-                                            searchPage(context,
-                                                new ReordersActivity());
-                                          },
-                                          onTap: () {
-                                            if (marketwatch[i].segment !=
-                                                "INDICES") {
-                                              Navigator.push(
-                                                context,
-                                                MaterialPageRoute(
-                                                    builder: (context) =>
-                                                        new BuySellActivity(
-                                                            marketwatch[i]
-                                                                .instrumentToken,
-                                                            marketwatch[i]
-                                                                .tradingSymbol,
-                                                            false)),
-                                              );
-                                            }
-                                          },
-                                          child: new Container(
-                                            color: Colors.transparent,
-                                            width: width,
-                                            padding: EdgeInsets.fromLTRB(
-                                                0, 10, 0, 10),
-                                            child: new Column(
-                                              children: <Widget>[
-                                                new Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceBetween,
-                                                  children: <Widget>[
-                                                    new Expanded(
-                                                      child: new Text(
-                                                        marketwatch[i]
-                                                            .tradingSymbol,
-                                                        style: TextStyle(
-                                                          fontSize: 15,
-                                                        ),
-                                                      ),
-                                                    ),
-                                                    new Row(
-                                                      children: <Widget>[
-                                                        new Text(
-                                                          tickers[int.parse(marketwatch[
-                                                                              i]
-                                                                          .instrumentToken)] ==
-                                                                      null ||
-                                                                  closes[int.parse(
-                                                                          marketwatch[i]
-                                                                              .instrumentToken)] ==
-                                                                      null
-                                                              ? ""
-                                                              : tickers[int.parse(
-                                                                      marketwatch[
-                                                                              i]
-                                                                          .instrumentToken)]
-                                                                  .toStringAsFixed(
-                                                                      2),
-                                                          style: TextStyle(
-                                                            color: tickers[int.parse(marketwatch[i]
-                                                                            .instrumentToken)] ==
-                                                                        null ||
-                                                                    closes[int.parse(marketwatch[i]
-                                                                            .instrumentToken)] ==
-                                                                        null
-                                                                ? Colors.black
-                                                                : tickers[int.parse(marketwatch[i].instrumentToken)] -
-                                                                            closes[int.parse(marketwatch[i]
-                                                                                .instrumentToken)] >
-                                                                        0
-                                                                    ? Colors
-                                                                        .green
-                                                                    : Colors
-                                                                        .red,
+                channelStreamController != null
+                    ? new StreamBuilder(
+                        stream: channelStreamController.stream,
+                        builder: (context, snapshot) {
+                          if (snapshot.hasData) {
+                            splitdata(snapshot.data);
+                          }
+                          return new Expanded(
+                            child: marketwatch.length == 0
+                                ? new SmartRefresher(
+                                    onRefresh: _onRefresh,
+                                    controller: _refreshController,
+                                    child: new Center(
+                                      child: new Text(
+                                        "Use the search bar at the top to add some instruments",
+                                        textAlign: TextAlign.center,
+                                      ),
+                                    ),
+                                  )
+                                : new SmartRefresher(
+                                    onRefresh: _onRefresh,
+                                    controller: _refreshController,
+                                    child: new ListView.separated(
+                                      itemCount: marketwatch.length,
+                                      separatorBuilder: (context, i) {
+                                        return marketwatch[i] == null
+                                            ? new Container()
+                                            : new Divider();
+                                      },
+                                      itemBuilder: (itemContext, i) {
+                                        return marketwatch[i] == null
+                                            ? new Container()
+                                            : new GestureDetector(
+                                                onLongPress: () {
+                                                  searchPage(context,
+                                                      new ReordersActivity());
+                                                },
+                                                onTap: () {
+                                                  if (marketwatch[i].segment !=
+                                                      "INDICES") {
+                                                    Navigator.push(
+                                                      context,
+                                                      MaterialPageRoute(
+                                                          builder: (context) =>
+                                                              new BuySellActivity(
+                                                                  marketwatch[i]
+                                                                      .instrumentToken,
+                                                                  marketwatch[i]
+                                                                      .tradingSymbol,
+                                                                  false)),
+                                                    );
+                                                  }
+                                                },
+                                                child: new Container(
+                                                  color: Colors.transparent,
+                                                  width: width,
+                                                  padding: EdgeInsets.fromLTRB(
+                                                      0, 10, 0, 10),
+                                                  child: new Column(
+                                                    children: <Widget>[
+                                                      new Row(
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .spaceBetween,
+                                                        children: <Widget>[
+                                                          new Expanded(
+                                                            child: new Text(
+                                                              marketwatch[i]
+                                                                  .tradingSymbol,
+                                                              style: TextStyle(
+                                                                fontSize: 15,
+                                                              ),
+                                                            ),
                                                           ),
-                                                        )
-                                                      ],
-                                                    ),
-                                                  ],
-                                                ),
-                                                new Container(
-                                                  height: 5,
-                                                ),
-                                                new Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment
-                                                          .spaceBetween,
-                                                  children: <Widget>[
-                                                    new Row(
-                                                      children: <Widget>[
-                                                        new Text(
-                                                          marketwatch[i]
-                                                              .segment,
-                                                          style: TextStyle(
-                                                            color: Colors.grey,
-                                                            fontSize: 12,
-                                                          ),
-                                                        ),
-                                                        new Container(
-                                                          width: 10,
-                                                        ),
-                                                        positionsMap[marketwatch[
-                                                                        i]
-                                                                    .instrumentToken] !=
-                                                                null
-                                                            ? new Icon(
-                                                                Icons
-                                                                    .card_travel,
-                                                                color:
-                                                                    Colors.grey,
-                                                                size: 15,
+                                                          new Row(
+                                                            children: <Widget>[
+                                                              new Text(
+                                                                tickers[marketwatch[i].instrumentToken] ==
+                                                                            null ||
+                                                                        closes[marketwatch[i].instrumentToken] ==
+                                                                            null
+                                                                    ? ""
+                                                                    : tickers[marketwatch[i]
+                                                                            .instrumentToken]
+                                                                        .toStringAsFixed(
+                                                                            2),
+                                                                style:
+                                                                    TextStyle(
+                                                                  color: tickers[marketwatch[i].instrumentToken] ==
+                                                                              null ||
+                                                                          closes[marketwatch[i].instrumentToken] ==
+                                                                              null
+                                                                      ? Colors
+                                                                          .black
+                                                                      : tickers[marketwatch[i].instrumentToken] - closes[marketwatch[i].instrumentToken] > 0
+                                                                          ? Colors
+                                                                              .green
+                                                                          : Colors
+                                                                              .red,
+                                                                ),
                                                               )
-                                                            : new Container(),
-                                                        new Container(
-                                                          width: 10,
-                                                        ),
-                                                        positionsMap[marketwatch[
-                                                                        i]
-                                                                    .instrumentToken] !=
-                                                                null
-                                                            ? new Text(
-                                                                positionsMap[marketwatch[
-                                                                            i]
-                                                                        .instrumentToken]
-                                                                    .shares
-                                                                    .toString(),
+                                                            ],
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      new Container(
+                                                        height: 5,
+                                                      ),
+                                                      new Row(
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .spaceBetween,
+                                                        children: <Widget>[
+                                                          new Row(
+                                                            children: <Widget>[
+                                                              new Text(
+                                                                marketwatch[i]
+                                                                    .segment,
                                                                 style:
                                                                     TextStyle(
                                                                   color: Colors
                                                                       .grey,
                                                                   fontSize: 12,
-                                                                ))
-                                                            : new Container()
-                                                      ],
-                                                    ),
-                                                    new Row(
-                                                      children: <Widget>[
-                                                        new Text(
-                                                          tickers[int.parse(marketwatch[i].instrumentToken)] ==
-                                                                      null ||
-                                                                  closes[int.parse(marketwatch[i]
-                                                                          .instrumentToken)] ==
+                                                                ),
+                                                              ),
+                                                              new Container(
+                                                                width: 10,
+                                                              ),
+                                                              positionsMap[marketwatch[
+                                                                              i]
+                                                                          .instrumentToken] !=
                                                                       null
-                                                              ? ""
-                                                              : (tickers[int.parse(marketwatch[i].instrumentToken)] -
-                                                                          closes[int.parse(marketwatch[i]
-                                                                              .instrumentToken)])
-                                                                      .toStringAsFixed(
-                                                                          2) +
-                                                                  " (" +
-                                                                  ((tickers[int.parse(marketwatch[i].instrumentToken)] - closes[int.parse(marketwatch[i].instrumentToken)]) *
-                                                                          100 /
-                                                                          closes[int.parse(marketwatch[i].instrumentToken)])
-                                                                      .toStringAsFixed(2) +
-                                                                  "%)",
-                                                          style: TextStyle(
-                                                            color: Colors.black,
-                                                            fontSize: 12,
+                                                                  ? new Icon(
+                                                                      Icons
+                                                                          .card_travel,
+                                                                      color: Colors
+                                                                          .grey,
+                                                                      size: 15,
+                                                                    )
+                                                                  : new Container(),
+                                                              new Container(
+                                                                width: 10,
+                                                              ),
+                                                              positionsMap[marketwatch[
+                                                                              i]
+                                                                          .instrumentToken] !=
+                                                                      null
+                                                                  ? new Text(
+                                                                      positionsMap[marketwatch[i]
+                                                                              .instrumentToken]
+                                                                          .shares
+                                                                          .toString(),
+                                                                      style:
+                                                                          TextStyle(
+                                                                        color: Colors
+                                                                            .grey,
+                                                                        fontSize:
+                                                                            12,
+                                                                      ))
+                                                                  : new Container()
+                                                            ],
                                                           ),
-                                                        )
-                                                      ],
-                                                    )
-                                                  ],
-                                                )
-                                              ],
-                                            ),
-                                          ),
-                                        );
-                                },
-                              ),
-                            ),
-                    );
-                  },
-                ),
+                                                          new Row(
+                                                            children: <Widget>[
+                                                              new Text(
+                                                                tickers[marketwatch[i].instrumentToken] ==
+                                                                            null ||
+                                                                        closes[marketwatch[i].instrumentToken] ==
+                                                                            null
+                                                                    ? ""
+                                                                    : (tickers[marketwatch[i].instrumentToken] - closes[marketwatch[i].instrumentToken]).toStringAsFixed(
+                                                                            2) +
+                                                                        " (" +
+                                                                        ((tickers[marketwatch[i].instrumentToken] - closes[marketwatch[i].instrumentToken]) *
+                                                                                100 /
+                                                                                closes[marketwatch[i].instrumentToken])
+                                                                            .toStringAsFixed(2) +
+                                                                        "%)",
+                                                                style:
+                                                                    TextStyle(
+                                                                  color: Colors
+                                                                      .black,
+                                                                  fontSize: 12,
+                                                                ),
+                                                              )
+                                                            ],
+                                                          )
+                                                        ],
+                                                      )
+                                                    ],
+                                                  ),
+                                                ),
+                                              );
+                                      },
+                                    ),
+                                  ),
+                          );
+                        },
+                      )
+                    : new Container(),
               ],
             ),
           ),

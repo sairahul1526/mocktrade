@@ -1,19 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
-import 'dart:convert';
+import 'dart:async';
 import 'dart:io' show Platform;
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 
 import './screens/dashboard.dart';
-import './screens/login.dart';
 import './utils/utils.dart';
-import './utils/models.dart';
 import './utils/config.dart';
+import './utils/api.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  Crashlytics.instance.enableInDevMode = true;
-  FlutterError.onError = Crashlytics.instance.recordFlutterError;
   runApp(new MaterialApp(
     title: "mocktrade",
     home: new MyApp(),
@@ -39,9 +35,6 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  bool loaded = false;
-  bool shouldLogin = false;
-
   @override
   void initState() {
     super.initState();
@@ -78,203 +71,66 @@ class _MyHomePageState extends State<MyHomePage> {
           });
         } else {
           getTickers().then((response) {
-            parseTickers(response);
+            if (response != null &&
+                response.tickers != null &&
+                response.tickers.length > 0) {
+              if (response.meta != null && response.meta.messageType == "1") {
+                oneButtonDialog(context, "", response.meta.message,
+                    !(response.meta.status == STATUS_403));
+              }
+              tickerList = response.tickers;
+              tickerList.forEach((ticker) {
+                tickerMap[ticker.instrumentToken] = ticker;
+              });
+              getUserID();
+            } else {
+              new Timer(const Duration(milliseconds: retry), () {
+                setState(() {
+                  tickers();
+                });
+              });
+            }
           });
         }
       });
     });
   }
 
-  void parseTickers(String response) {
-    LineSplitter ls = new LineSplitter();
-    List<String> tickerDetails = new List();
-    tickerList.clear();
-    int i = 0;
-
-    List<Ticker> nseList = new List();
-    Map<String, Ticker> nseMap = new Map();
-
-    List<Ticker> bseList = new List();
-    Map<String, Ticker> bseMap = new Map();
-
-    List<Ticker> nfoList = new List();
-    Map<String, Ticker> nfoMap = new Map();
-
-    for (var line in ls.convert(response)) {
-      i++;
-      if (i == 1) {
-        continue;
-      }
-      tickerDetails = line.split(",");
-      if (tickerDetails[11] == "NSE") {
-        nseMap[tickerDetails[0]] = new Ticker(
-            instrumentToken: tickerDetails[0],
-            exchangeToken: tickerDetails[1],
-            tradingSymbol: tickerDetails[2],
-            name: tickerDetails[3],
-            expiry: tickerDetails[5],
-            strike: tickerDetails[6],
-            tickSize: tickerDetails[7],
-            lotSize: tickerDetails[8],
-            instrumentType: tickerDetails[9],
-            segment: tickerDetails[10],
-            exchange: tickerDetails[11]);
-        nseList.add(new Ticker(
-            instrumentToken: tickerDetails[0],
-            exchangeToken: tickerDetails[1],
-            tradingSymbol: tickerDetails[2],
-            name: tickerDetails[3],
-            expiry: tickerDetails[5],
-            strike: tickerDetails[6],
-            tickSize: tickerDetails[7],
-            lotSize: tickerDetails[8],
-            instrumentType: tickerDetails[9],
-            segment: tickerDetails[10],
-            exchange: tickerDetails[11]));
-      } else if (tickerDetails[11] == "BSE") {
-        bseMap[tickerDetails[0]] = new Ticker(
-            instrumentToken: tickerDetails[0],
-            exchangeToken: tickerDetails[1],
-            tradingSymbol: tickerDetails[2],
-            name: tickerDetails[3],
-            expiry: tickerDetails[5],
-            strike: tickerDetails[6],
-            tickSize: tickerDetails[7],
-            lotSize: tickerDetails[8],
-            instrumentType: tickerDetails[9],
-            segment: tickerDetails[10],
-            exchange: tickerDetails[11]);
-        bseList.add(new Ticker(
-            instrumentToken: tickerDetails[0],
-            exchangeToken: tickerDetails[1],
-            tradingSymbol: tickerDetails[2],
-            name: tickerDetails[3],
-            expiry: tickerDetails[5],
-            strike: tickerDetails[6],
-            tickSize: tickerDetails[7],
-            lotSize: tickerDetails[8],
-            instrumentType: tickerDetails[9],
-            segment: tickerDetails[10],
-            exchange: tickerDetails[11]));
-      } else if (tickerDetails[11] == "NFO") {
-        nfoMap[tickerDetails[0]] = new Ticker(
-            instrumentToken: tickerDetails[0],
-            exchangeToken: tickerDetails[1],
-            tradingSymbol: tickerDetails[10] == "NFO-FUT"
-                ? tickerDetails[2].split(regex)[0] +
-                    " " +
-                    nameMonthFormat
-                        .format(DateTime.parse(tickerDetails[5]))
-                        .toUpperCase() +
-                    " " +
-                    tickerDetails[9]
-                : tickerDetails[2].split(regex)[0] +
-                    " " +
-                    (tickerDetails[2].split(regex)[0] == "NIFTY" ||
-                            tickerDetails[2].split(regex)[0] == "BANKNIFTY"
-                        ? nameFormat
-                            .format(DateTime.parse(tickerDetails[5]))
-                            .toUpperCase()
-                        : nameMonthFormat
-                            .format(DateTime.parse(tickerDetails[5]))
-                            .toUpperCase()) +
-                    " " +
-                    (num.parse(tickerDetails[6].split("\.")[1]) == 0
-                        ? num.parse(tickerDetails[6].split("\.")[0]).toString()
-                        : tickerDetails[6]) +
-                    " " +
-                    tickerDetails[9],
-            name: tickerDetails[3],
-            expiry: tickerDetails[5],
-            strike: tickerDetails[6],
-            tickSize: tickerDetails[7],
-            lotSize: tickerDetails[8],
-            instrumentType: tickerDetails[9],
-            segment: tickerDetails[10],
-            exchange: tickerDetails[11]);
-        nfoList.add(new Ticker(
-            instrumentToken: tickerDetails[0],
-            exchangeToken: tickerDetails[1],
-            tradingSymbol: tickerDetails[10] == "NFO-FUT"
-                ? tickerDetails[2].split(regex)[0] +
-                    " " +
-                    nameMonthFormat
-                        .format(DateTime.parse(tickerDetails[5]))
-                        .toUpperCase() +
-                    " " +
-                    tickerDetails[9]
-                : tickerDetails[2].split(regex)[0] +
-                    " " +
-                    (tickerDetails[2].split(regex)[0] == "NIFTY" ||
-                            tickerDetails[2].split(regex)[0] == "BANKNIFTY"
-                        ? nameFormat
-                            .format(DateTime.parse(tickerDetails[5]))
-                            .toUpperCase()
-                        : nameMonthFormat
-                            .format(DateTime.parse(tickerDetails[5]))
-                            .toUpperCase()) +
-                    " " +
-                    (num.parse(tickerDetails[6].split("\.")[1]) == 0
-                        ? num.parse(tickerDetails[6].split("\.")[0]).toString()
-                        : tickerDetails[6]) +
-                    " " +
-                    tickerDetails[9],
-            name: tickerDetails[3],
-            expiry: tickerDetails[5],
-            strike: tickerDetails[6],
-            tickSize: tickerDetails[7],
-            lotSize: tickerDetails[8],
-            instrumentType: tickerDetails[9],
-            segment: tickerDetails[10],
-            exchange: tickerDetails[11]));
-      }
-    }
-
-    tickerMap.addAll(nseMap);
-    tickerMap.addAll(bseMap);
-    tickerMap.addAll(nfoMap);
-
-    tickerList.addAll(nseList);
-    tickerList.addAll(bseList);
-    tickerList.addAll(nfoList);
-
-    tokens();
-  }
-
-  void tokens() {
-    if (prefs.getString("accessToken") != null &&
-        prefs.getString("accessToken").length > 0) {
-      accessToken = prefs.getString("accessToken");
+  void getUserID() {
+    if (prefs.getString("userID") != null &&
+        prefs.getString("userID").length > 0) {
       userID = prefs.getString("userID");
+      email = prefs.getString("email");
 
+      Navigator.of(context).pushReplacement(new MaterialPageRoute(
+          builder: (BuildContext context) => new DashboardActivity()));
+    } else {
       checkInternet().then((internet) {
         if (internet == null || !internet) {
           Future<bool> dialog =
               retryDialog(context, "No Internet connection", "");
           dialog.then((onValue) {
-            if (onValue) {
-              tokens();
-            }
+            if (onValue) {}
           });
         } else {
-          Future<bool> load = checkAccessToken();
-          load.then((response) {
-            if (response) {
+          Future<dynamic> load = addGetResponse(API.ACCOUNT, Map.from({}));
+          load.then((onValue) {
+            if (onValue != null &&
+                onValue["user_id"] != null &&
+                onValue["user_id"].toString().length > 0) {
+              userID = onValue["user_id"].toString();
+              prefs.setString("userID", userID);
               Navigator.of(context).pushReplacement(new MaterialPageRoute(
                   builder: (BuildContext context) => new DashboardActivity()));
             } else {
-              setState(() {
-                loaded = true;
-                shouldLogin = true;
+              new Timer(const Duration(milliseconds: retry), () {
+                setState(() {
+                  getUserID();
+                });
               });
             }
           });
         }
-      });
-    } else {
-      setState(() {
-        loaded = true;
-        shouldLogin = true;
       });
     }
   }
@@ -321,59 +177,9 @@ class _MyHomePageState extends State<MyHomePage> {
                 height: 200,
                 child: new Image.asset('assets/bull.jpg'),
               ),
-              loaded && shouldLogin
-                  ? new Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        new Text(
-                          "Login with",
-                          style: TextStyle(
-                            fontSize: 17,
-                            color: Colors.black,
-                            fontWeight: FontWeight.w400,
-                            decoration: TextDecoration.none,
-                          ),
-                        ),
-                      ],
-                    )
-                  : new Container(),
               new Container(
                 height: 10,
               ),
-              loaded && shouldLogin
-                  ? new FlatButton(
-                      onPressed: () {
-                        Navigator.of(context).pushReplacement(
-                            new MaterialPageRoute(
-                                builder: (BuildContext context) =>
-                                    new LoginActivity()));
-                      },
-                      child: new Container(
-                        margin: const EdgeInsets.all(15.0),
-                        padding: const EdgeInsets.all(3.0),
-                        child: new Row(
-                          mainAxisSize: MainAxisSize.max,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: <Widget>[
-                            new SizedBox(
-                              width: 50,
-                              height: 50,
-                              child: new Image.asset('assets/kite.jpg'),
-                            ),
-                            new Text(
-                              "Zerodha",
-                              style: TextStyle(
-                                fontSize: 17,
-                                color: Colors.black,
-                                fontWeight: FontWeight.w400,
-                                decoration: TextDecoration.none,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    )
-                  : new Container(),
             ],
           ),
         ),

@@ -24,34 +24,23 @@ Future<Accounts> getAccounts(Map<String, String> query) async {
 
 Future<Amounts> getAmounts(Map<String, String> query) async {
   if (prefs != null) {
-    for (var i = 1; i < 30; i++) {
-      prefs.setString(
-          dateFormat.format(DateTime.now().add(new Duration(days: -i))) +
-              "_" +
-              query["user_id"] +
-              "_amounts",
-          "");
-    }
-    String resp = prefs.getString(dateFormat.format(DateTime.now()) +
-        "_" +
-        query["user_id"] +
-        "_amounts");
-    if (resp != null && resp.length > 0) {
-      return Amounts.fromJson(json.decode(resp));
+    String respDate = prefs.getString("amounts_date");
+    if (respDate != null &&
+        respDate.length > 0 &&
+        respDate == dateFormat.format(new DateTime.now())) {
+      String resp = prefs.getString("amounts");
+      if (resp != null && resp.length > 0) {
+        return Amounts.fromJson(json.decode(resp));
+      }
     }
   }
   try {
     final response = await http
-        .get(Uri.http(API.URL, API.AMOUNT, query), headers: headers)
+        .get(Uri.http(API.URL, API.TICKER), headers: headers)
         .timeout(Duration(seconds: timeout));
-
     if (response.statusCode == 200) {
-      prefs.setString(
-          dateFormat.format(DateTime.now()) +
-              "_" +
-              query["user_id"] +
-              "_amounts",
-          response.body);
+      prefs.setString("amounts", response.body);
+      prefs.setString("amounts_date", dateFormat.format(new DateTime.now()));
     }
     return Amounts.fromJson(json.decode(response.body));
   } catch (e) {
@@ -68,6 +57,20 @@ Future<Logins> getLogins(Map<String, String> query) async {
         .timeout(Duration(seconds: timeout));
 
     return Logins.fromJson(json.decode(response.body));
+  } catch (e) {
+    return null;
+  }
+}
+
+// ticker last
+
+Future<TickerLasts> getTickerClose(Map<String, String> query) async {
+  try {
+    final response = await http
+        .get(Uri.http(API.URL, API.TICKERCLOSE, query), headers: headers)
+        .timeout(Duration(seconds: timeout));
+
+    return TickerLasts.fromJson(json.decode(response.body));
   } catch (e) {
     return null;
   }
@@ -124,6 +127,35 @@ Future<Positions> getPositions(Map<String, String> query) async {
         .timeout(Duration(seconds: timeout));
 
     return Positions.fromJson(json.decode(response.body));
+  } catch (e) {
+    return null;
+  }
+}
+
+// ticker
+
+Future<Tickers> getTickers() async {
+  if (prefs != null) {
+     prefs.setString("tickers", "");
+    String respDate = prefs.getString("tickers_date");
+    if (respDate != null &&
+        respDate.length > 0 &&
+        respDate == dateFormat.format(new DateTime.now())) {
+      String resp = prefs.getString("tickers");
+      if (resp != null && resp.length > 0) {
+        return Tickers.fromJson(json.decode(resp));
+      }
+    }
+  }
+  try {
+    final response = await http
+        .get(Uri.http(API.URL, API.TICKER), headers: headers)
+        .timeout(Duration(seconds: timeout));
+    if (response.statusCode == 200) {
+      prefs.setString("tickers", response.body);
+      prefs.setString("tickers_date", dateFormat.format(new DateTime.now()));
+    }
+    return Tickers.fromJson(json.decode(response.body));
   } catch (e) {
     return null;
   }

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:mocktrade/utils/models.dart';
-import 'package:web_socket_channel/io.dart';
 import 'package:modal_progress_hud/modal_progress_hud.dart';
 
 import '../utils/config.dart';
@@ -19,9 +18,6 @@ class ReordersActivityState extends State<ReordersActivity>
   @override
   bool get wantKeepAlive => true;
   double width = 0;
-
-  IOWebSocketChannel channel = IOWebSocketChannel.connect(
-      "wss://ws.kite.trade?api_key=" + apiKey + "&access_token=" + accessToken);
 
   List<Ticker> reordermarketwatch = new List();
 

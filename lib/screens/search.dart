@@ -111,6 +111,14 @@ class SearchActivityState extends State<SearchActivity> {
                           setState(() {
                             loading = true;
                           });
+                          if (marketwatch.length >= maxWatchList) {
+                            Navigator.pop(
+                                context,
+                                "Cannot add more than " +
+                                    maxWatchList.toString() +
+                                    " instruments to a marketwatch.");
+                            return;
+                          }
                           bool added = false;
                           marketwatch.forEach((watch) {
                             if (int.parse(watch.instrumentToken) ==

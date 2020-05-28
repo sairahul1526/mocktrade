@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mocktrade/screens/funds.dart';
 import 'package:mocktrade/screens/history.dart';
+import 'package:mocktrade/screens/login.dart';
 import 'package:mocktrade/screens/performance.dart';
 import 'package:share/share.dart';
 import 'package:launch_review/launch_review.dart';
@@ -54,19 +55,43 @@ class AccountActivityState extends State<AccountActivity> {
                 new Container(
                   height: 20,
                 ),
-                new Container(
-                  color: Colors.transparent,
-                  padding: EdgeInsets.all(15),
-                  child: new Text(
-                    prefs.getString("name"),
-                    style: TextStyle(
-                      letterSpacing: 2,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.black,
-                      fontSize: 25,
-                    ),
-                  ),
-                ),
+                prefs.getString("email") != null &&
+                        prefs.getString("email").length > 0
+                    ? new Container(
+                        color: Colors.transparent,
+                        padding: EdgeInsets.all(15),
+                        child: new Text(
+                          prefs.getString("email"),
+                          style: TextStyle(
+                            letterSpacing: 2,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.black,
+                            fontSize: 15,
+                          ),
+                        ),
+                      )
+                    : new GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => new Login()),
+                          );
+                        },
+                        child: new Container(
+                          color: Colors.transparent,
+                          padding: EdgeInsets.all(15),
+                          child: new Text(
+                            "Login",
+                            style: TextStyle(
+                              letterSpacing: 2,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.black,
+                              fontSize: 25,
+                            ),
+                          ),
+                        ),
+                      ),
                 new GestureDetector(
                   onTap: () {
                     Navigator.push(
@@ -147,8 +172,9 @@ class AccountActivityState extends State<AccountActivity> {
                 ),
                 new GestureDetector(
                   onTap: () {
-                    Share.share('check out my website https://example.com',
-                        subject: 'Look what I made!');
+                    Share.share(
+                        'Practice trading with virtual funds and become efficient in sock markets using MockTrade app. Download now https://play.google.com/store/apps/details?id=com.saikrishna.mocktrade',
+                        subject: "");
                   },
                   child: new Container(
                     color: Colors.transparent,
@@ -231,27 +257,31 @@ class AccountActivityState extends State<AccountActivity> {
                 new Container(
                   height: 100,
                 ),
-                new GestureDetector(
-                  onTap: () {
-                    prefs.clear();
-                    accessToken = "";
-                    userID = "";
-                    Navigator.pop(context);
-                    Navigator.of(context).pushReplacement(new MaterialPageRoute(
-                        builder: (BuildContext context) => new MyHomePage()));
-                  },
-                  child: new Container(
-                    color: Colors.transparent,
-                    padding: EdgeInsets.all(15),
-                    child: new Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: <Widget>[
-                        new Text("Logout"),
-                        new Icon(Icons.power_settings_new)
-                      ],
-                    ),
-                  ),
-                ),
+                prefs.getString("email") != null &&
+                        prefs.getString("email").length > 0
+                    ? new GestureDetector(
+                        onTap: () {
+                          prefs.clear();
+                          userID = "";
+                          Navigator.pop(context);
+                          Navigator.of(context).pushReplacement(
+                              new MaterialPageRoute(
+                                  builder: (BuildContext context) =>
+                                      new MyHomePage()));
+                        },
+                        child: new Container(
+                          color: Colors.transparent,
+                          padding: EdgeInsets.all(15),
+                          child: new Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: <Widget>[
+                              new Text("Logout"),
+                              new Icon(Icons.power_settings_new)
+                            ],
+                          ),
+                        ),
+                      )
+                    : new Container(),
                 new Container(
                   child: new Center(
                     child: new Text(

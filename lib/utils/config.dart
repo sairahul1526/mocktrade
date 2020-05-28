@@ -1,8 +1,12 @@
 import './models.dart';
+import 'dart:async';
 
+int maxWatchList = 20;
 List<Ticker> tickerList = new List();
 Map<String, Ticker> tickerMap = new Map();
 Map<String, Position> positionsMap = new Map();
+
+Map<String, double> closes = new Map();
 
 List<Ticker> marketwatch = new List();
 List<Order> orders = new List();
@@ -11,14 +15,13 @@ List<Position> positions = new List();
 double invested = 0;
 double current = 0;
 
-String apiKey = "cu50ienpvww2pb2o";
-String accessToken = "";
 String userID = "";
+String email = "";
 
 double amount = 0;
 
 class API {
-  static const URL = "mocktrade1.ap-south-1.elasticbeanstalk.com";
+  static const URL = "jau.mabido.xyz";
   static const ACCOUNT = "account";
   static const AMOUNT = "amount";
   static const BUYSELL = "buysell";
@@ -27,6 +30,10 @@ class API {
   static const TOKEN = "token";
   static const ORDER = "order";
   static const POSITIONS = "position";
+  static const TICKER = "ticker";
+  static const TICKERCLOSE = "tickerclose";
+  static const SENDEMAILOTP = "sendemailotp";
+  static const VERIFYEMAILOTP = "verifyemailotp";
 }
 
 String supportEmail = "dravid.rahul1526@gmail.com";
@@ -58,3 +65,9 @@ const defaultOffset = "0";
 const STATUS_400 = "400";
 const STATUS_403 = "403"; // forbidden
 const STATUS_500 = "500";
+
+StreamController<Map<String, double>> streamController =
+    new StreamController.broadcast();
+
+StreamController<String> channelStreamController =
+    new StreamController.broadcast();

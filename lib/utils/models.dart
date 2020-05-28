@@ -1,31 +1,3 @@
-class Ticker {
-  String instrumentToken; // get data from kite
-  String exchangeToken;
-  String tradingSymbol;
-  String name;
-  String expiry; // 2019-10-14
-  String strike; // 26500
-  String tickSize;
-  String lotSize; // 20
-  String instrumentType; // EQ, FUT, CE, PE
-  String segment;
-  String exchange;
-
-  Ticker({
-    this.instrumentToken, // get data from kite
-    this.exchangeToken,
-    this.tradingSymbol,
-    this.name,
-    this.expiry, // 2019-10-14
-    this.strike, // 26500
-    this.tickSize,
-    this.lotSize, // 20
-    this.instrumentType, // EQ, FUT, CE, PE
-    this.segment,
-    this.exchange,
-  });
-}
-
 // account
 
 class Accounts {
@@ -52,6 +24,7 @@ class Account {
   final String id;
   final String userID;
   final String name;
+  final String email;
   final String watchlist;
   final String amount;
   final String status;
@@ -62,6 +35,7 @@ class Account {
       {this.id,
       this.userID,
       this.name,
+      this.email,
       this.watchlist,
       this.amount,
       this.status,
@@ -73,6 +47,7 @@ class Account {
       id: json['id'],
       userID: json['user_id'],
       name: json['name'],
+      email: json['email'],
       watchlist: json['watchlist'],
       amount: json['amount'],
       status: json['status'],
@@ -152,6 +127,46 @@ class Login {
   factory Login.fromJson(Map<String, dynamic> json) {
     return Login(
       url: json['url'],
+    );
+  }
+}
+
+// ticker last
+
+class TickerLasts {
+  final List<TickerLast> tickerLasts;
+  final Meta meta;
+  final Pagination pagination;
+
+  TickerLasts({this.tickerLasts, this.meta, this.pagination});
+
+  factory TickerLasts.fromJson(Map<String, dynamic> json) {
+    return TickerLasts(
+      tickerLasts: json['data'] != null
+          ? List<TickerLast>.from(
+              json['data'].map((i) => TickerLast.fromJson(i)))
+          : new List<TickerLast>(),
+      meta: Meta.fromJson(json['meta']),
+      pagination: json['pagination'] != null
+          ? Pagination.fromJson(json['pagination'])
+          : null,
+    );
+  }
+}
+
+class TickerLast {
+  final String key;
+  final String value;
+
+  TickerLast({
+    this.key,
+    this.value,
+  });
+
+  factory TickerLast.fromJson(Map<String, dynamic> json) {
+    return TickerLast(
+      key: json['k'],
+      value: json['v'],
     );
   }
 }
@@ -377,6 +392,72 @@ class Position {
       status: json['status'],
       createdDateTime: json['created_date_time'],
       modifiedDateTime: json['modified_date_time'],
+    );
+  }
+}
+
+// ticker
+
+class Tickers {
+  final List<Ticker> tickers;
+  final Meta meta;
+  final Pagination pagination;
+
+  Tickers({this.tickers, this.meta, this.pagination});
+
+  factory Tickers.fromJson(Map<String, dynamic> json) {
+    return Tickers(
+      tickers: json['data'] != null
+          ? List<Ticker>.from(json['data'].map((i) => Ticker.fromJson(i)))
+          : new List<Ticker>(),
+      meta: Meta.fromJson(json['meta']),
+      pagination: json['pagination'] != null
+          ? Pagination.fromJson(json['pagination'])
+          : null,
+    );
+  }
+}
+
+class Ticker {
+  String instrumentToken; // get data from kite
+  String exchangeToken;
+  String tradingSymbol;
+  String name;
+  String expiry; // 2019-10-14
+  String strike; // 26500
+  String tickSize;
+  String lotSize; // 20
+  String instrumentType; // EQ, FUT, CE, PE
+  String segment;
+  String exchange;
+
+  Ticker({
+    this.instrumentToken, // get data from kite
+    this.exchangeToken,
+    this.tradingSymbol,
+    this.name,
+    this.expiry, // 2019-10-14
+    this.strike, // 26500
+    this.tickSize,
+    this.lotSize, // 20
+    this.instrumentType, // EQ, FUT, CE, PE
+    this.segment,
+    this.exchange,
+  });
+
+  factory Ticker.fromJson(Map<String, dynamic> json) {
+    return Ticker(
+      instrumentToken: json['i'], // get data from kite
+      exchangeToken: json['e'],
+      tradingSymbol: json['t'],
+      name: json['n'],
+      expiry: json['ex'], // 2019-10-14
+      strike: json['s'], // 26500
+      tickSize: json['ti'],
+      lotSize: json['l'], // 20
+      instrumentType: json['in'], // EQ, FUT, CE, PE
+      segment: json['se'],
+      exchange: json['exc'],
     );
   }
 }
