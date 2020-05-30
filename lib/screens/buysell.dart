@@ -157,18 +157,25 @@ class BuySellActivityState extends State<BuySellActivity> {
                     if (response != null) {
                       if (response["meta"]["status"] == "200" ||
                           response["meta"]["status"] == "201") {
+                        var date = DateTime.now().toString();
+                        if (response["price"] != null) {
+                          price = double.parse(response["price"]);
+                          invested = double.parse(response["invested"]);
+                          date = response["created_date_time"];
+                        }
                         orders.insert(
-                            0,
-                            new Order(
-                                userID: userID,
-                                ticker: id.toString(),
-                                name: tickerMap[id].tradingSymbol,
-                                exchange: tickerMap[id].segment,
-                                shares: int.parse(shares.text).toString(),
-                                price: price.toString(),
-                                invested: invested.toStringAsFixed(2),
-                                type: sell ? "0" : "1",
-                                createdDateTime: DateTime.now().toString()));
+                          0,
+                          new Order(
+                              userID: userID,
+                              ticker: id.toString(),
+                              name: tickerMap[id].tradingSymbol,
+                              exchange: tickerMap[id].segment,
+                              shares: int.parse(shares.text).toString(),
+                              price: price.toString(),
+                              invested: invested.toStringAsFixed(2),
+                              type: sell ? "0" : "1",
+                              createdDateTime: date),
+                        );
                         if (positionsMap[id.toString()] != null) {
                           var positionInvested =
                               positionsMap[id.toString()].invested;
@@ -190,11 +197,7 @@ class BuySellActivityState extends State<BuySellActivity> {
                           }
                           positionsMap[id.toString()].invested =
                               (double.parse(positionInvested) +
-                                      (sell
-                                          ? -(double.parse(shares.text) *
-                                              lastTradedPrice)
-                                          : (double.parse(shares.text) *
-                                              lastTradedPrice)))
+                                      (sell ? -invested : invested))
                                   .toStringAsFixed(2);
                           positionsMap[id.toString()].shares =
                               (int.parse(positionShares) +
@@ -209,9 +212,7 @@ class BuySellActivityState extends State<BuySellActivity> {
                                 userID: userID,
                                 ticker: id.toString(),
                                 name: symbol,
-                                invested: (double.parse(shares.text) *
-                                        lastTradedPrice)
-                                    .toString(),
+                                invested: invested.toString(),
                                 shares: int.parse(shares.text).toString(),
                                 status: "1",
                                 expiry: tickerMap[id].expiry,
@@ -220,9 +221,7 @@ class BuySellActivityState extends State<BuySellActivity> {
                             userID: userID,
                             ticker: id.toString(),
                             name: symbol,
-                            invested:
-                                (double.parse(shares.text) * lastTradedPrice)
-                                    .toString(),
+                            invested: invested.toString(),
                             shares: int.parse(shares.text).toString(),
                             status: "1",
                             expiry: tickerMap[id].expiry,
