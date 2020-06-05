@@ -16,7 +16,8 @@ double invested = 0;
 double current = 0;
 
 String userID = "";
-String email = "";
+String phone = "";
+String name = "";
 
 double amount = 0;
 
@@ -32,14 +33,14 @@ class API {
   static const POSITIONS = "position";
   static const TICKER = "ticker";
   static const TICKERCLOSE = "tickerclose";
-  static const SENDEMAILOTP = "sendemailotp";
-  static const VERIFYEMAILOTP = "verifyemailotp";
+  static const SENDOTP = "sendotp";
+  static const VERIFYOTP = "verifyotp";
 }
 
-String supportEmail = "dravid.rahul1526@gmail.com";
+String supportEmail = "rahul.mocktrade@gmail.com";
 
 class APPVERSION {
-  static const ANDROID = "1.0";
+  static const ANDROID = "1.7";
   static const IOS = "1.0";
 }
 

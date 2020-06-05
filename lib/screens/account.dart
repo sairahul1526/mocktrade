@@ -25,6 +25,17 @@ class AccountActivityState extends State<AccountActivity> {
     super.initState();
   }
 
+  loginPage(BuildContext context, Widget page) async {
+    final data = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => page),
+    ) as String;
+    if (data != null && data.length > 0) {
+      Navigator.of(context).pushReplacement(new MaterialPageRoute(
+          builder: (BuildContext context) => new MyHomePage()));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     width = MediaQuery.of(context).size.width;
@@ -55,13 +66,13 @@ class AccountActivityState extends State<AccountActivity> {
                 new Container(
                   height: 20,
                 ),
-                prefs.getString("email") != null &&
-                        prefs.getString("email").length > 0
+                prefs.getString("phone") != null &&
+                        prefs.getString("phone").length > 0
                     ? new Container(
                         color: Colors.transparent,
-                        padding: EdgeInsets.all(15),
+                        padding: EdgeInsets.only(left: 15),
                         child: new Text(
-                          prefs.getString("email"),
+                          prefs.getString("name"),
                           style: TextStyle(
                             letterSpacing: 2,
                             fontWeight: FontWeight.w800,
@@ -72,11 +83,7 @@ class AccountActivityState extends State<AccountActivity> {
                       )
                     : new GestureDetector(
                         onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => new Login()),
-                          );
+                          loginPage(context, new Login());
                         },
                         child: new Container(
                           color: Colors.transparent,
@@ -92,6 +99,22 @@ class AccountActivityState extends State<AccountActivity> {
                           ),
                         ),
                       ),
+                prefs.getString("phone") != null &&
+                        prefs.getString("phone").length > 0
+                    ? new Container(
+                        color: Colors.transparent,
+                        padding: EdgeInsets.fromLTRB(15, 0, 0, 15),
+                        child: new Text(
+                          prefs.getString("phone"),
+                          style: TextStyle(
+                            letterSpacing: 2,
+                            fontWeight: FontWeight.w800,
+                            color: Colors.black,
+                            fontSize: 15,
+                          ),
+                        ),
+                      )
+                    : new Container(),
                 new GestureDetector(
                   onTap: () {
                     Navigator.push(
@@ -173,7 +196,7 @@ class AccountActivityState extends State<AccountActivity> {
                 new GestureDetector(
                   onTap: () {
                     Share.share(
-                        'Practice trading with virtual funds and become efficient in sock markets using MockTrade app. Download now https://play.google.com/store/apps/details?id=com.saikrishna.mocktrade',
+                        'Practice trading with virtual funds and become a pro in stock markets using MockTrade app. Download now https://play.google.com/store/apps/details?id=com.saikrishna.mocktrade',
                         subject: "");
                   },
                   child: new Container(
@@ -257,13 +280,12 @@ class AccountActivityState extends State<AccountActivity> {
                 new Container(
                   height: 100,
                 ),
-                prefs.getString("email") != null &&
-                        prefs.getString("email").length > 0
+                prefs.getString("phone") != null &&
+                        prefs.getString("phone").length > 0
                     ? new GestureDetector(
                         onTap: () {
                           prefs.clear();
                           userID = "";
-                          Navigator.pop(context);
                           Navigator.of(context).pushReplacement(
                               new MaterialPageRoute(
                                   builder: (BuildContext context) =>

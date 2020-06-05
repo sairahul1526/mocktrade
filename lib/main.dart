@@ -100,7 +100,8 @@ class _MyHomePageState extends State<MyHomePage> {
     if (prefs.getString("userID") != null &&
         prefs.getString("userID").length > 0) {
       userID = prefs.getString("userID");
-      email = prefs.getString("email");
+      phone = prefs.getString("phone");
+      name = prefs.getString("name");
 
       Navigator.of(context).pushReplacement(new MaterialPageRoute(
           builder: (BuildContext context) => new DashboardActivity()));

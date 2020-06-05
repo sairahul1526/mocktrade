@@ -194,14 +194,20 @@ class FundsActivityState extends State<FundsActivity>
                                                 fontWeight: FontWeight.w400,
                                               ),
                                             ),
-                                            new Text(
-                                              invested != null
-                                                  ? invested.toStringAsFixed(2)
-                                                  : "0.00",
-                                              style: TextStyle(
-                                                color: Colors.black,
-                                                fontSize: 15,
-                                                fontWeight: FontWeight.w400,
+                                            new Container(
+                                              width: 5,
+                                            ),
+                                            new Expanded(
+                                              child: new Text(
+                                                invested != null
+                                                    ? invested
+                                                        .toStringAsFixed(2)
+                                                    : "0.00",
+                                                style: TextStyle(
+                                                  color: Colors.black,
+                                                  fontSize: 15,
+                                                  fontWeight: FontWeight.w400,
+                                                ),
                                               ),
                                             )
                                           ],

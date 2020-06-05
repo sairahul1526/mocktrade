@@ -36,7 +36,7 @@ Future<Amounts> getAmounts(Map<String, String> query) async {
   }
   try {
     final response = await http
-        .get(Uri.http(API.URL, API.TICKER), headers: headers)
+        .get(Uri.http(API.URL, API.AMOUNT, query), headers: headers)
         .timeout(Duration(seconds: timeout));
     if (response.statusCode == 200) {
       prefs.setString("amounts", response.body);

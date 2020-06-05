@@ -41,62 +41,10 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
     super.initState();
 
     accountsapi();
-    tickerlastapi();
-  }
-
-  void tickerlastapi() {
-    checkInternet().then((internet) {
-      if (internet == null || !internet) {
-        Future<bool> dialog =
-            retryDialog(context, "No Internet connection", "");
-        dialog.then((onValue) {
-          if (onValue) {
-            tickerlastapi();
-          }
-        });
-        _refreshController.refreshCompleted();
-      } else {
-        Future<TickerLasts> data = getTickerClose({});
-        data.then((response) {
-          if (response != null) {
-            if (response.tickerLasts != null &&
-                response.tickerLasts.length > 0) {
-              response.tickerLasts.forEach((d) {
-                List<String> temp = d.value.split(":");
-                // print(temp);
-                if (temp.length > 1) {
-                  // if (tickers[d.key] == null) {
-                  //   tickers[d.key] = double.parse(temp[0]);
-                  // }
-                  closes[d.key] = double.parse(temp[1]);
-                }
-              });
-            } else {
-              new Timer(const Duration(milliseconds: retry), () {
-                setState(() {
-                  tickerlastapi();
-                });
-              });
-            }
-            if (response.meta != null && response.meta.messageType == "1") {
-              oneButtonDialog(context, "", response.meta.message,
-                  !(response.meta.status == STATUS_403));
-            }
-          } else {
-            new Timer(const Duration(milliseconds: retry), () {
-              setState(() {
-                tickerlastapi();
-              });
-            });
-          }
-        });
-      }
-    });
   }
 
   void _onRefresh() async {
     accountsapi();
-    tickerlastapi();
   }
 
   void accountsapi() {
@@ -117,7 +65,11 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
             _refreshController.refreshCompleted();
             if (response.accounts != null) {
               if (response.accounts.length > 0) {
-                prefs.setString("email", response.accounts[0].email);
+                prefs.setString("phone", response.accounts[0].phone);
+                prefs.setString("name", response.accounts[0].name);
+                phone = response.accounts[0].phone;
+                name = response.accounts[0].name;
+
                 amount = double.parse(response.accounts[0].amount);
                 marketwatch.clear();
                 response.accounts[0].watchlist.split(",").forEach((id) {
@@ -128,6 +80,9 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
                 setState(() {
                   marketwatch = marketwatch;
                 });
+                if (name.length == 0) {
+                  takeName();
+                }
                 positionsapi();
               }
             }
@@ -148,7 +103,7 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
   }
 
   takeName() async {
-    TextEditingController name = new TextEditingController();
+    TextEditingController nameEdit = new TextEditingController();
     await showDialog<String>(
         barrierDismissible: false,
         context: context,
@@ -160,7 +115,7 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
                 children: <Widget>[
                   new Expanded(
                     child: new TextField(
-                      controller: name,
+                      controller: nameEdit,
                       autofocus: true,
                       decoration: new InputDecoration(
                           labelText: 'Your Name', hintText: 'eg. John Smith'),
@@ -172,7 +127,7 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
                 new FlatButton(
                     child: const Text('DONE'),
                     onPressed: () {
-                      if (name.text.length > 0) {
+                      if (nameEdit.text.length > 0) {
                         checkInternet().then((internet) {
                           if (internet == null || !internet) {
                             Future<bool> dialog = retryDialog(
@@ -183,15 +138,18 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
                               }
                             });
                           } else {
-                            Future<bool> load = add(
+                            Future<bool> load = update(
                                 API.ACCOUNT,
                                 Map.from({
+                                  "name": nameEdit.text,
+                                }),
+                                Map.from({
                                   "user_id": userID,
-                                  "name": name.text,
                                 }));
                             load.then((onValue) {
                               if (onValue != null) {
-                                prefs.setString("name", name.text);
+                                prefs.setString("name", nameEdit.text);
+                                name = nameEdit.text;
                                 Navigator.of(context).pop();
                               }
                             });
@@ -259,7 +217,10 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
     List<String> temp;
     stocks.forEach((stock) {
       temp = stock.split(":");
-      if (temp.length == 2) {
+      if (temp.length > 2) {
+        tickers[temp[0]] = double.parse(temp[1]);
+        closes[temp[0]] = double.parse(temp[2]);
+      } else if (temp.length > 1) {
         tickers[temp[0]] = double.parse(temp[1]);
       }
     });
@@ -280,11 +241,17 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
     });
     if (ids.length > 0) {
       channel = IOWebSocketChannel.connect(
-          "ws://" + API.URL + "/realtime?tickers=" + ids.keys.join(","));
+        "ws://" +
+            API.URL +
+            "/realtime?user_id=" +
+            userID +
+            "&tickers=" +
+            ids.keys.join(","),
+        headers: headers,
+      );
 
       channel.stream.listen(
         (message) {
-          // print(message);
           if (message != null && message != "1") {
             channelStreamController.add(message);
           }
@@ -465,10 +432,9 @@ class WatchlistsActivityState extends State<WatchlistsActivity>
                                                           new Row(
                                                             children: <Widget>[
                                                               new Text(
-                                                                tickers[marketwatch[i].instrumentToken] ==
-                                                                            null ||
-                                                                        closes[marketwatch[i].instrumentToken] ==
-                                                                            null
+                                                                tickers[marketwatch[i]
+                                                                            .instrumentToken] ==
+                                                                        null
                                                                     ? ""
                                                                     : tickers[marketwatch[i]
                                                                             .instrumentToken]

@@ -24,7 +24,7 @@ class Account {
   final String id;
   final String userID;
   final String name;
-  final String email;
+  final String phone;
   final String watchlist;
   final String amount;
   final String status;
@@ -35,7 +35,7 @@ class Account {
       {this.id,
       this.userID,
       this.name,
-      this.email,
+      this.phone,
       this.watchlist,
       this.amount,
       this.status,
@@ -47,7 +47,7 @@ class Account {
       id: json['id'],
       userID: json['user_id'],
       name: json['name'],
-      email: json['email'],
+      phone: json['phone'],
       watchlist: json['watchlist'],
       amount: json['amount'],
       status: json['status'],

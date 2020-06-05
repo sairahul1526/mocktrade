@@ -99,7 +99,9 @@ class BuySellActivityState extends State<BuySellActivity> {
     if (data[id] != null) {
       lastTradedPrice = data[id];
 
-      if (shares.text != null && shares.text.length > 0) {
+      if (shares.text != null &&
+          shares.text.length > 0 &&
+          int.tryParse(shares.text) != null) {
         requiredAmount =
             (lastTradedPrice * int.parse(shares.text)).toStringAsFixed(2);
       }
@@ -128,7 +130,8 @@ class BuySellActivityState extends State<BuySellActivity> {
             if (shares.text.length > 0 &&
                 shares.text != "0" &&
                 lastTradedPrice != null &&
-                lastTradedPrice != 0) {
+                lastTradedPrice != 0 &&
+                int.tryParse(shares.text) != null) {
               if (int.parse(shares.text) %
                       double.parse(tickerMap[id].lotSize) !=
                   0) {
@@ -381,6 +384,7 @@ class BuySellActivityState extends State<BuySellActivity> {
                               });
                             }
                           },
+                          autofocus: true,
                           controller: shares,
                           keyboardType: TextInputType.number,
                           textInputAction: TextInputAction.done,

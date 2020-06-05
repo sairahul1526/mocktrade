@@ -1,4 +1,3 @@
-/// Timeseries chart example
 import 'package:charts_flutter/flutter.dart' as charty;
 import 'package:flutter/material.dart';
 import 'package:mocktrade/utils/utils.dart';
