@@ -196,7 +196,7 @@ class AccountActivityState extends State<AccountActivity> {
                 new GestureDetector(
                   onTap: () {
                     Share.share(
-                        'Practice trading with virtual funds and become a pro in stock markets using MockTrade app. Download now https://play.google.com/store/apps/details?id=com.saikrishna.mocktrade',
+                        'Practice trading with virtual funds and become a pro in stock markets using MockTrade app. Download now https://bit.ly/30iSFlM',
                         subject: "");
                   },
                   child: new Container(
