@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:mocktrade/screens/alerts.dart';
+import 'package:mocktrade/utils/config.dart';
+import 'package:onesignal_flutter/onesignal_flutter.dart';
 
 import './account.dart';
 import './orders.dart';
@@ -22,7 +25,13 @@ class DashboardActivityState extends State<DashboardActivity>
   @override
   void initState() {
     super.initState();
-    controller = new TabController(length: 4, vsync: this, initialIndex: 0);
+    controller = new TabController(length: 5, vsync: this, initialIndex: 0);
+
+    OneSignal.shared.sendTag("user_id", userID).then((response) {
+      print("Successfully sent tags with response: $response");
+    }).catchError((error) {
+      print("Encountered an error sending tags: $error");
+    });
   }
 
   @override
@@ -147,13 +156,44 @@ class DashboardActivityState extends State<DashboardActivity>
                       mainAxisSize: MainAxisSize.min,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: <Widget>[
-                        Icon(Icons.settings,
+                        Icon(Icons.notifications_none,
                             color:
                                 selectedTab == 3 ? Colors.blue : Colors.black),
                         Text(
-                          "Settings",
+                          "Alerts",
                           style: TextStyle(
                               color: selectedTab == 3
+                                  ? Colors.blue
+                                  : Colors.black),
+                        )
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            new Expanded(
+              child: SizedBox(
+                child: Material(
+                  type: MaterialType.transparency,
+                  child: InkWell(
+                    onTap: () {
+                      setState(() {
+                        selectedTab = 4;
+                        controller.index = selectedTab;
+                      });
+                    },
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: <Widget>[
+                        Icon(Icons.settings,
+                            color:
+                                selectedTab == 4 ? Colors.blue : Colors.black),
+                        Text(
+                          "Settings",
+                          style: TextStyle(
+                              color: selectedTab == 4
                                   ? Colors.blue
                                   : Colors.black),
                         )
@@ -173,6 +213,7 @@ class DashboardActivityState extends State<DashboardActivity>
           new WatchlistsActivity(),
           new OrdersActivity(),
           new PortfolioActivity(),
+          new AlertsActivity(),
           new AccountActivity()
         ],
       ),

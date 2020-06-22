@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'dart:async';
 import 'dart:io' show Platform;
+import 'package:onesignal_flutter/onesignal_flutter.dart';
 
 import './screens/dashboard.dart';
 import './utils/utils.dart';
@@ -38,6 +39,17 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
+
+    OneSignal.shared.init(ONESIGNAL_APP_ID, iOSSettings: {
+      OSiOSSettings.autoPrompt: true,
+      OSiOSSettings.inAppLaunchUrl: true
+    });
+    OneSignal.shared
+        .setInFocusDisplayType(OSNotificationDisplayType.notification);
+
+    // The promptForPushNotificationsWithUserResponse function will show the iOS push notification prompt. We recommend removing the following code and instead using an In-App Message to prompt for notification permission
+    OneSignal.shared
+        .promptUserForPushNotificationPermission(fallbackToSettings: true);
 
     if (Platform.isAndroid) {
       headers["appversion"] = APPVERSION.ANDROID;
@@ -141,12 +153,18 @@ class _MyHomePageState extends State<MyHomePage> {
     return MaterialApp(
       home: new Container(
         color: Colors.white,
-        child: new Center(
-          child: new ListView(
-            shrinkWrap: true,
-            children: <Widget>[
-              new Row(
-                mainAxisAlignment: MainAxisAlignment.center,
+        child: new Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          // shrinkWrap: true,
+          children: <Widget>[
+            new Expanded(
+              child: new Container(),
+            ),
+            new Expanded(
+              child: new Container(),
+            ),
+            new Expanded(
+              child: new Column(
                 children: <Widget>[
                   new Text(
                     "Welcome to",
@@ -157,11 +175,6 @@ class _MyHomePageState extends State<MyHomePage> {
                       decoration: TextDecoration.none,
                     ),
                   ),
-                ],
-              ),
-              new Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
                   new Text(
                     "MOCK TRADE",
                     style: TextStyle(
@@ -173,16 +186,34 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                 ],
               ),
-              new SizedBox(
-                width: 200,
-                height: 200,
-                child: new Image.asset('assets/bull.jpg'),
+            ),
+            new SizedBox(
+              width: 300,
+              height: 300,
+              child: new Image.asset('assets/bull.jpg'),
+            ),
+            new Expanded(
+              child: new Container(),
+            ),
+            new Expanded(
+              child: new Container(),
+            ),
+            new Expanded(
+              child: new Container(),
+            ),
+            new Expanded(
+              child: new Text(
+                "By using this app, \nyou agree to our Privacy Policy and Terms and Conditions.",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 10,
+                  color: Colors.black,
+                  fontWeight: FontWeight.w400,
+                  decoration: TextDecoration.none,
+                ),
               ),
-              new Container(
-                height: 10,
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

@@ -27,8 +27,6 @@ class BuySellActivityState extends State<BuySellActivity> {
 
   TextEditingController shares = new TextEditingController();
 
-  List<Ticker> tickerBuySellList = new List();
-
   String requiredAmount = "";
   String id;
   String symbol;

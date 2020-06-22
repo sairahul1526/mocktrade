@@ -57,6 +57,71 @@ class Account {
   }
 }
 
+// alert
+
+class Alerts {
+  final List<Alert> alerts;
+  final Meta meta;
+  final Pagination pagination;
+
+  Alerts({this.alerts, this.meta, this.pagination});
+
+  factory Alerts.fromJson(Map<String, dynamic> json) {
+    return Alerts(
+      alerts: json['data'] != null
+          ? List<Alert>.from(json['data'].map((i) => Alert.fromJson(i)))
+          : new List<Alert>(),
+      meta: Meta.fromJson(json['meta']),
+      pagination: json['pagination'] != null
+          ? Pagination.fromJson(json['pagination'])
+          : null,
+    );
+  }
+}
+
+class Alert {
+  final String id;
+  final String userID;
+  final String ticker;
+  final String name;
+  final String price;
+  final String when;
+  final String alerted;
+  final String expiry;
+  final String status;
+  final String createdDateTime;
+  final String modifiedDateTime;
+
+  Alert(
+      {this.id,
+      this.userID,
+      this.ticker,
+      this.name,
+      this.price,
+      this.when,
+      this.alerted,
+      this.expiry,
+      this.status,
+      this.createdDateTime,
+      this.modifiedDateTime});
+
+  factory Alert.fromJson(Map<String, dynamic> json) {
+    return Alert(
+      id: json['id'],
+      userID: json['user_id'],
+      ticker: json['ticker'],
+      name: json['name'],
+      price: json['price'],
+      when: json['when'],
+      alerted: json['alerted'],
+      expiry: json['expiry'],
+      status: json['status'],
+      createdDateTime: json['created_date_time'],
+      modifiedDateTime: json['modified_date_time'],
+    );
+  }
+}
+
 // amount
 
 class Amounts {

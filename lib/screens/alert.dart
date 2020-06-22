@@ -73,6 +73,7 @@ class AlertActivityState extends State<AlertActivity> {
                       ),
                       new Text(
                         subtitle,
+                        textAlign: TextAlign.center,
                         style: TextStyle(
                           color: success ? Colors.blue : Colors.red,
                         ),

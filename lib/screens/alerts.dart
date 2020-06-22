@@ -8,15 +8,15 @@ import '../utils/config.dart';
 import '../utils/utils.dart';
 import '../utils/models.dart';
 
-class OrdersActivity extends StatefulWidget {
+class AlertsActivity extends StatefulWidget {
   @override
-  OrdersActivityState createState() {
-    return new OrdersActivityState();
+  AlertsActivityState createState() {
+    return new AlertsActivityState();
   }
 }
 
-class OrdersActivityState extends State<OrdersActivity>
-    with AutomaticKeepAliveClientMixin<OrdersActivity> {
+class AlertsActivityState extends State<AlertsActivity>
+    with AutomaticKeepAliveClientMixin<AlertsActivity> {
   @override
   bool get wantKeepAlive => true;
   double width = 0;
@@ -35,16 +35,16 @@ class OrdersActivityState extends State<OrdersActivity>
 
     _controller = ScrollController();
     _controller.addListener(_scrollListener);
-    orders.clear();
-    ordersapi();
+    alerts.clear();
+    alertsapi();
   }
 
   void _onRefresh() async {
-    orders.clear();
+    alerts.clear();
     end = false;
     ongoing = false;
     offset = defaultOffset;
-    ordersapi();
+    alertsapi();
   }
 
   _scrollListener() {
@@ -55,12 +55,12 @@ class OrdersActivityState extends State<OrdersActivity>
         setState(() {
           loading = true;
         });
-        ordersapi();
+        alertsapi();
       }
     }
   }
 
-  void ordersapi() {
+  void alertsapi() {
     if (!mounted) return;
     setState(() {
       loading = true;
@@ -72,7 +72,7 @@ class OrdersActivityState extends State<OrdersActivity>
             retryDialog(context, "No Internet connection", "");
         dialog.then((onValue) {
           if (onValue) {
-            ordersapi();
+            alertsapi();
           }
         });
         if (!mounted) return;
@@ -82,28 +82,26 @@ class OrdersActivityState extends State<OrdersActivity>
         });
         _refreshController.refreshCompleted();
       } else {
-        Future<Orders> data = getOrders({
+        Future<Alerts> data = getAlerts({
           "user_id": userID,
           "limit": defaultLimit,
           "offset": offset,
           "orderby": "created_date_time",
           "sortby": "desc",
-          "status": "1",
-          "today": "true",
         });
         data.then((response) {
           _refreshController.refreshCompleted();
           if (response != null) {
-            if (response.orders != null && response.orders.length > 0) {
+            if (response.alerts != null && response.alerts.length > 0) {
               offset = (int.parse(response.pagination.offset) +
-                      response.orders.length)
+                      response.alerts.length)
                   .toString();
-              response.orders.forEach((order) {
-                orders.add(order);
+              response.alerts.forEach((alert) {
+                alerts.add(alert);
               });
               if (!mounted) return;
               setState(() {
-                orders = orders;
+                alerts = alerts;
               });
             } else {
               end = true;
@@ -122,7 +120,7 @@ class OrdersActivityState extends State<OrdersActivity>
             new Timer(const Duration(milliseconds: retry), () {
               if (!mounted) return;
               setState(() {
-                ordersapi();
+                alertsapi();
               });
             });
           }
@@ -143,7 +141,7 @@ class OrdersActivityState extends State<OrdersActivity>
         ),
         backgroundColor: Colors.white,
         title: new Text(
-          "Orders",
+          "Alerts",
           style: TextStyle(
             letterSpacing: 2,
             fontWeight: FontWeight.w800,
@@ -163,21 +161,21 @@ class OrdersActivityState extends State<OrdersActivity>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   new Expanded(
-                    child: orders.length == 0
+                    child: alerts.length == 0
                         ? new SmartRefresher(
                             onRefresh: _onRefresh,
                             controller: _refreshController,
                             child: new Center(
                                 child: new Text(loading
                                     ? ""
-                                    : "You haven't placed any orders")),
+                                    : "You haven't placed any alerts")),
                           )
                         : new SmartRefresher(
                             onRefresh: _onRefresh,
                             controller: _refreshController,
                             child: new ListView.separated(
                               controller: _controller,
-                              itemCount: orders.length,
+                              itemCount: alerts.length,
                               separatorBuilder: (context, i) {
                                 return new Divider();
                               },
@@ -192,28 +190,52 @@ class OrdersActivityState extends State<OrdersActivity>
                                       children: <Widget>[
                                         new Row(
                                           mainAxisAlignment:
+                                              MainAxisAlignment.start,
+                                          children: <Widget>[
+                                            new Expanded(
+                                              child: new Text(
+                                                alerts[i].name +
+                                                    (alerts[i].when == "1"
+                                                        ? " > "
+                                                        : " < ") +
+                                                    alerts[i].price,
+                                                style: TextStyle(
+                                                  fontSize: 15,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        new Container(
+                                          height: 5,
+                                        ),
+                                        new Row(
+                                          mainAxisAlignment:
                                               MainAxisAlignment.spaceBetween,
                                           children: <Widget>[
+                                            new Icon(
+                                              Icons.fiber_manual_record,
+                                              color: alerts[i].alerted == "0"
+                                                  ? Colors.green
+                                                  : Colors.red,
+                                              size: 10,
+                                            ),
                                             new Container(
-                                              margin:
-                                                  EdgeInsets.only(bottom: 5),
-                                              padding: EdgeInsets.all(3),
-                                              color: orders[i].type == "0"
-                                                  ? HexColor("#e1d0d1")
-                                                  : HexColor("#cfd6e1"),
+                                              width: 10,
+                                            ),
+                                            new Expanded(
                                               child: new Text(
-                                                  orders[i].type == "0"
-                                                      ? "SELL"
-                                                      : "BUY",
-                                                  style: TextStyle(
-                                                      color:
-                                                          orders[i].type == "0"
-                                                              ? Colors.red
-                                                              : Colors.blue)),
+                                                alerts[i].alerted == "0"
+                                                    ? "Active"
+                                                    : "Alert",
+                                                style: TextStyle(
+                                                  fontSize: 15,
+                                                ),
+                                              ),
                                             ),
                                             new Text(
                                               headingDateFormat.format(
-                                                  DateTime.parse(orders[i]
+                                                  DateTime.parse(alerts[i]
                                                       .createdDateTime)),
                                               style: TextStyle(
                                                 color: Colors.grey,
@@ -222,53 +244,6 @@ class OrdersActivityState extends State<OrdersActivity>
                                             ),
                                           ],
                                         ),
-                                        new Container(
-                                          height: 5,
-                                        ),
-                                        new Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: <Widget>[
-                                            new Expanded(
-                                              child: new Text(
-                                                orders[i].name,
-                                                style: TextStyle(
-                                                  fontSize: 15,
-                                                ),
-                                              ),
-                                            ),
-                                            new Row(
-                                              children: <Widget>[
-                                                new Text(orders[i].shares +
-                                                    " X " +
-                                                    orders[i].price)
-                                              ],
-                                            ),
-                                          ],
-                                        ),
-                                        new Container(
-                                          height: 5,
-                                        ),
-                                        new Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          children: <Widget>[
-                                            new Text(
-                                              orders[i].exchange,
-                                              style: TextStyle(
-                                                color: Colors.grey,
-                                                fontSize: 12,
-                                              ),
-                                            ),
-                                            new Text(
-                                              orders[i].invested,
-                                              style: TextStyle(
-                                                color: Colors.grey,
-                                                fontSize: 12,
-                                              ),
-                                            ),
-                                          ],
-                                        )
                                       ],
                                     ),
                                   ),

@@ -20,6 +20,20 @@ Future<Accounts> getAccounts(Map<String, String> query) async {
   }
 }
 
+// alert
+
+Future<Alerts> getAlerts(Map<String, String> query) async {
+  try {
+    final response = await http
+        .get(Uri.http(API.URL, API.ALERT, query), headers: headers)
+        .timeout(Duration(seconds: timeout));
+
+    return Alerts.fromJson(json.decode(response.body));
+  } catch (e) {
+    return null;
+  }
+}
+
 // amount
 
 Future<Amounts> getAmounts(Map<String, String> query) async {
@@ -136,7 +150,6 @@ Future<Positions> getPositions(Map<String, String> query) async {
 
 Future<Tickers> getTickers() async {
   if (prefs != null) {
-     prefs.setString("tickers", "");
     String respDate = prefs.getString("tickers_date");
     if (respDate != null &&
         respDate.length > 0 &&

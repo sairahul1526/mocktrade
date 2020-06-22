@@ -11,6 +11,7 @@ Map<String, double> closes = new Map();
 List<Ticker> marketwatch = new List();
 List<Order> orders = new List();
 List<Position> positions = new List();
+List<Alert> alerts = new List();
 
 double invested = 0;
 double current = 0;
@@ -21,9 +22,13 @@ String name = "";
 
 double amount = 0;
 
+
+const ONESIGNAL_APP_ID = "b8a19ded-25a0-48a2-b320-9dd270bdd98d";
+
 class API {
   static const URL = "jau.mabido.xyz";
   static const ACCOUNT = "account";
+  static const ALERT = "alert";
   static const AMOUNT = "amount";
   static const BUYSELL = "buysell";
   static const LOGIN = "login";
@@ -40,7 +45,7 @@ class API {
 String supportEmail = "rahul.mocktrade@gmail.com";
 
 class APPVERSION {
-  static const ANDROID = "1.7";
+  static const ANDROID = "1.8";
   static const IOS = "1.0";
 }
 

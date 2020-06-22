@@ -51,6 +51,7 @@ class PortfolioActivityState extends State<PortfolioActivity>
           if (response != null) {
             if (response.accounts != null) {
               if (response.accounts.length > 0) {
+                if (!mounted) return;
                 setState(() {
                   amount = double.parse(response.accounts[0].amount);
                 });
@@ -63,6 +64,7 @@ class PortfolioActivityState extends State<PortfolioActivity>
             }
           } else {
             new Timer(const Duration(milliseconds: retry), () {
+              if (!mounted) return;
               setState(() {
                 accountsapi();
               });
@@ -98,6 +100,7 @@ class PortfolioActivityState extends State<PortfolioActivity>
                   positions.add(position);
                 });
               }
+              if (!mounted) return;
               setState(() {
                 positionsMap = positionsMap;
                 positions = positions;
@@ -113,6 +116,7 @@ class PortfolioActivityState extends State<PortfolioActivity>
             }
           } else {
             new Timer(const Duration(milliseconds: retry), () {
+              if (!mounted) return;
               setState(() {
                 positionsapi();
               });
