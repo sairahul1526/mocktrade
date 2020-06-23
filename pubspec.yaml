@@ -35,6 +35,8 @@ dependencies:
   charts_flutter: ^0.8.1
   share: ^0.6.3+5
   launch_review: ^2.0.0
+  sliding_up_panel: ^1.0.2
+  onesignal_flutter: ^2.5.0
 
 
   # The following adds the Cupertino Icons font to your application.
