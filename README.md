@@ -1,16 +1,21 @@
-# mocktrade
+# MockTrading Indian Stocks app (Made with Flutter)
 
-A new Flutter project.
+MockTrade is a simple, and easy stock market simulator. You start off with 5,00,000 virtual amount and can place unlimited trades, during the market hours. The beautiful design and easy trading flow help users learn the stock market, monitor their stocks, and test various trading strategies.
 
-## Getting Started
+Here’s the list of main features in MockTrade:
 
-This project is a starting point for a Flutter application.
+- Over 3,000 NSE stocks to trade
+- Unlimited trading
+- Beautiful design
+- Live stock quotes
+- Easy portfolio monitoring
+- Performance tracker
 
-A few resources to get you started if this is your first Flutter project:
+Required: Zerodha Kite API 
+Disclaimer: MockTrade is only a useful tool for virtual trading. This app is not responsible for profits, revenues, or data and financial losses. This app also does not provide any financial advice.
 
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
+## Backend code @ [API](https://github.com/sairahul1526/mocktrade-api)
 
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+
+This is my side project.
+Feel free to ping me for any information.
