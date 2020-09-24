@@ -1,3 +1,5 @@
+![alt text](https://github.com/sairahul1526/mocktrade/blob/master/pics/group.png?raw=true)
+
 # MockTrading Indian Stocks app (Made with Flutter)
 
 MockTrade is a simple, and easy stock market simulator. You start off with 5,00,000 virtual amount and can place unlimited trades, during the market hours. The beautiful design and easy trading flow help users learn the stock market, monitor their stocks, and test various trading strategies.
