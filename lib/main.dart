@@ -12,7 +12,7 @@ import './utils/api.dart';
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(new MaterialApp(
-    title: "mocktrade",
+    title: "Mocktrade",
     home: new MyApp(),
   ));
 }
@@ -21,8 +21,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'mocktrade',
-      home: MyHomePage(title: 'mocktrade'),
+      title: 'Mocktrade',
+      home: MyHomePage(title: 'Mocktrade'),
     );
   }
 }

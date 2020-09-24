@@ -212,9 +212,8 @@ Future<dynamic> addGetResponse(
       API.URL,
       endpoint,
     ),
-  );
+  )..fields.addAll(body);
   request.headers.addAll(headers);
-  body.forEach((k, v) => {request.fields[k] = v});
 
   try {
     var response = await request.send();
